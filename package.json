@@ -2,7 +2,7 @@
   "name": "flex-combo-plus",
   "version": "1.0.0",
     
-  "description": "The flex-combo-plus is combo tool designed for web front-end developer. It support various kinds of combo format by modify configuration(eg. yahoo combo).",
+  "description": "The flex-combo-plus is combo tool designed for web front-end developer. It support various kinds of combo format by modify configuration",
     
   "main": "flex-combo-plus.js",
     
