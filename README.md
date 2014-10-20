@@ -4,6 +4,10 @@
 
 从Flex Combo项目修改而来的Flex Combo Plus，在保持原有功能不变的基础上进行了增强。
 
+## 致谢
+
+对wayfind、bachi、paulguo、limingv5及他们维护的Flex Combo致以感谢！
+
 # Flex Combo 介绍
 
 ## 介绍

@@ -1,14 +1,8 @@
 {
-  "name": "flex-combo",
-  "version": "0.6.4",
-  "description": "The Flex-combo is combo tool designed for web front-end developer. It support various kinds of combo format by modify configuration(eg. yahoo combo).",
-  "main": "flex-combo.js",
-  "bin": {
-    "flex-combo": "./bin/flex-combo"
-  },
-  "directories": {
-    "test": "test"
-  },
+  "name": "flex-combo-plus",
+  "version": "1.0.0",
+  "description": "The flex-combo-plus is combo tool designed for web front-end developer. It support various kinds of combo format by modify configuration(eg. yahoo combo).",
+  "main": "flex-combo-plus.js",
   "dependencies": {
     "iconv-lite": "~0.4.0",
     "is-utf8": "~0.2.0",
@@ -23,58 +17,25 @@
     "dac": "~0.1.7"
   },
   "devDependencies": {},
-  "scripts": {
-    "test": "node ./test.js"
-  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/wayfind/flex-combo.git"
+    "url": "https://github.com/licg9999/flex-combo-plus.git"
   },
   "keywords": [
     "combo",
     "js",
     "node",
-    "taobao"
+    "cainiao"
   ],
   "author": {
-    "name": "wayfind"
+    "name": "uno"
   },
-  "license": "BSD",
-  "gitHead": "2898f67fb69d99b03f1ca1ca7cad6b933da832a7",
-  "bugs": {
-    "url": "https://github.com/wayfind/flex-combo/issues"
-  },
-  "homepage": "https://github.com/wayfind/flex-combo",
-  "_id": "flex-combo@0.6.4",
-  "_shasum": "c9e1c8674a5b8088626ca32a3f9da20e7c41fe5f",
-  "_from": "flex-combo@",
-  "_npmVersion": "1.4.28",
-  "_npmUser": {
-    "name": "limingv5",
-    "email": "limingv5@gmail.com"
-  },
+  "license": "MIT",
+  "homepage": "https://github.com/licg9999/flex-combo-plus",
   "maintainers": [
     {
-      "name": "wayfind",
-      "email": "whyer1@gmail.com"
-    },
-    {
-      "name": "bachi",
-      "email": "bachi@taobao.com"
-    },
-    {
-      "name": "paulguo",
-      "email": "badkaikai@gmail.com"
-    },
-    {
-      "name": "limingv5",
-      "email": "limingv5@gmail.com"
+      "name": "uno",
+      "email": "licg9999@126.com"
     }
-  ],
-  "dist": {
-    "shasum": "c9e1c8674a5b8088626ca32a3f9da20e7c41fe5f",
-    "tarball": "http://registry.npmjs.org/flex-combo/-/flex-combo-0.6.4.tgz"
-  },
-  "_resolved": "https://registry.npmjs.org/flex-combo/-/flex-combo-0.6.4.tgz",
-  "readme": "ERROR: No README data found!"
+  ]
 }
