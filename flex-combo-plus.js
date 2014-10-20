@@ -1,17 +1,3 @@
-/**
- Yahoo Combo:
- <script src="http://yui.yahooapis.com/combo
- ?2.5.2/build/editor/editor-beta-min.js
- &2.5.2/build/yahoo-dom-event/yahoo-dom-event.js
- &2.5.2/build/container/container_core-min.js
- &2.5.2/build/menu/menu-min.js
- &2.5.2/build/element/element-beta-min.js
- &2.5.2/build/button/button-min.js">
- </script>
-
- //淘宝combo server规则a.tbcdn.cn/apps??
- */
-
 var http = require('http')
     , urlLib = require('url')
     , fs = require('fs')
@@ -25,9 +11,9 @@ var http = require('http')
     , joinbuffers = require('joinbuffers')
     , debug = require('debug')('flex-combo:debug')
     , debugInfo = require('debug')('flex-combo:info')
-    , delog = require("debug.log")
+    , delog = require('debug.log')
     , dac = require('dac')
-    , readyconf = require("readyconf")
+    , readyconf = require('readyconf')
     , merge = readyconf.merge;
 
 
@@ -51,58 +37,60 @@ var typer = {
 
 var param = {
     urls: {},
-    hosts: {"a.tbcdn.cn": "122.225.67.241", "g.tbcdn.cn": "115.238.23.250"},
+    hosts: {'a.tbcdn.cn': '122.225.67.241', 
+            'g.tbcdn.cn': '115.238.23.250', 
+            'g.assets.daily.taobao.net': '10.101.73.189'},
     headers: {},
     servlet: '?',
     seperator: ',',
-    charset: "utf-8",
+    charset: 'utf-8',
     urlBasedCharset: {},
-    supportedFile: "\\.js$|\\.css$|\\.png$|\\.gif$|\\.jpg$|\\.swf$|\\.xml$|\\.less$|\\.scss$|\\.svg$|\\.ttf$|\\.eot$|\\.woff$|\\.mp3$",
+    supportedFile: '\\.js$|\\.css$|\\.png$|\\.gif$|\\.jpg$|\\.swf$|\\.xml$|\\.less$|\\.scss$|\\.svg$|\\.ttf$|\\.eot$|\\.woff$|\\.mp3$',
     filter: {
-        "\\?.+": '',
-        "-min\\.js$": ".js",
-        "-min\\.css$": ".css"
+        '\\?.+': '',
+        '-min\\.js$': '.js',
+        '-min\\.css$': '.css'
     },
-    define: "KISSY.add",
+    define: 'KISSY.add',
     anonymous: false
 };
 
 
 var userHome = process.env.HOME || process.env.USERPROFILE || process.env.HOMEPATH; // 兼容windows
 var commonDir = path.join(userHome, '.'+path.basename(__dirname));
-var cacheDir = path.join(commonDir, "cache");
+var cacheDir = path.join(commonDir, 'cache');
 if (!fs.existsSync(cacheDir)) {
     mkdirp.sync(cacheDir, {mode: 0777});
 }
-param = readyconf.init(path.join(commonDir, "config.json"), param);
+param = readyconf.init(path.join(commonDir, 'config.json'), param);
 
 param.cacheDir = cacheDir;
 param.prjDir = process.cwd();
 
 
 function cosoleResp(type, c) {
-    c += " [" + type + ']';
+    c += ' [' + type + ']';
 
     switch (type) {
-        case "Need":
+        case 'Need':
             delog.request(c);
             break;
-        case "Compile":
-        case "Embed":
+        case 'Compile':
+        case 'Embed':
             delog.process(c);
             break;
-        case "Disable":
-            c = "<= " + c;
-        case "Error":
+        case 'Disable':
+            c = '<= ' + c;
+        case 'Error':
             delog.error(c);
             break;
-        case "Local":
-        case "Remote":
-        case "Cache":
+        case 'Local':
+        case 'Remote':
+        case 'Cache':
             delog.response(c);
             console.log('');
             break;
-        case "Actually":
+        case 'Actually':
         default:
             delog.log(c);
     }
@@ -114,7 +102,7 @@ function adaptCharset(buff, outCharset, charset) {
         return buff;
     }
 
-    return iconv.encode(iconv.decode(buff, charset)+"\n", outCharset);
+    return iconv.encode(iconv.decode(buff, charset)+'\n', outCharset);
 }
 
 
@@ -214,7 +202,7 @@ function readFromLocal(fullPath) {
             return null;
         }
         
-        // 找到最长匹配的配置，顺序遍历已定义好的目录。多个目录用逗号","分隔。
+        // 找到最长匹配的配置，顺序遍历已定义好的目录。多个目录用逗号','分隔。
         var dirs = map[lastMatchPos]['to'].split(',');
         for (var i = 0, len = dirs.length; i < len; i++) {
             var dir = dirs[i];
@@ -276,7 +264,7 @@ function readFromLocal(fullPath) {
             return null;
         }
         
-        //找到最长匹配的配置，顺序遍历已定义好的目录。多个目录用逗号","分隔。
+        //找到最长匹配的配置，顺序遍历已定义好的目录。多个目录用逗号','分隔。
         var dirs = map[longestMatchPos].split(',');
         for (var i = 0, len = dirs.length; i < len; i++) {
             var dir = dirs[i];
@@ -410,7 +398,7 @@ function buildRequestOption(url, req) {
 function isLoop(reqHost, requestOption) {
     //远程请求的域名不能和访问域名一致，否则会陷入请求循环。
     if (reqHost === requestOption.host) {
-        cosoleResp('Error', reqHost + " will lead to Loop Req!");
+        cosoleResp('Error', reqHost + ' will lead to Loop Req!');
         return true;
     }
     else {
@@ -439,7 +427,7 @@ exports = module.exports = function (prjDir, urls, options) {
     }
     
     if (param.charset) {
-        param.charset = param.charset.replace(/utf(\d+)/, "utf-$1");
+        param.charset = param.charset.replace(/utf(\d+)/, 'utf-$1');
     }
     
     debug(util.inspect(param));
@@ -450,8 +438,8 @@ exports = module.exports = function (prjDir, urls, options) {
                 next();
             }
             catch (e) {
-                res.writeHead(500, {"Content-Type": "text/html"});
-                res.end("<h1>Error 500</h1>");
+                res.writeHead(500, {'Content-Type': 'text/html'});
+                res.end('<h1>Error 500</h1>');
             }
         }
 
@@ -467,12 +455,12 @@ exports = module.exports = function (prjDir, urls, options) {
                 return;
             }
 
-            cosoleResp("Need", url);
+            cosoleResp('Need', url);
 
             var filteredUrl = filterUrl(url);
             res.writeHead(200, {
-                "Access-Control-Allow-Origin": '*',
-                "Content-Type": mime.lookup(filteredUrl.split('?')[0]) + ';charset=' + param.charset
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': mime.lookup(filteredUrl.split('?')[0]) + ';charset=' + param.charset
             });
 
             var singleFileContent = readFromLocal(filteredUrl);
@@ -498,7 +486,7 @@ exports = module.exports = function (prjDir, urls, options) {
                 .get(requestOption, function (resp) {
                     var buffs = [];
                     if (resp.statusCode !== 200) {
-                        cosoleResp("Disable", requestOption.headers.host + requestOption.path + " (HOST: " + requestOption.host + ')');
+                        cosoleResp('Disable', requestOption.headers.host + requestOption.path + ' (HOST: ' + requestOption.host + ')');
 
                         nextAction();
                         return;
@@ -515,7 +503,7 @@ exports = module.exports = function (prjDir, urls, options) {
                                 buff = buff.slice(3, buff.length);
                             }
 
-                            cosoleResp('Remote', requestOption.headers.host + requestOption.path + " (HOST: " + requestOption.host + ')');
+                            cosoleResp('Remote', requestOption.headers.host + requestOption.path + ' (HOST: ' + requestOption.host + ')');
 
                             if (isBinFile(filteredUrl)) {
                                 cacheFile(cacheFileName(path.join(reqHost, requestOption.path)), buff);
@@ -563,7 +551,7 @@ exports = module.exports = function (prjDir, urls, options) {
             return;
         }
 
-        cosoleResp("Need", url);
+        cosoleResp('Need', url);
         
         var reqArray = [];
         var prevNeedHttp = false;   //为循环做准备，用来判定上次循环的file是否需要通过http获取
@@ -577,7 +565,7 @@ exports = module.exports = function (prjDir, urls, options) {
             
             if (i === 0) {
                 res.writeHead(200, {
-                    "Content-Type": mime.lookup(fullPath.split('?')[0]) + ";charset=" + param.charset
+                    'Content-Type': mime.lookup(fullPath.split('?')[0]) + ';charset=' + param.charset
                 });
             }
 
@@ -627,7 +615,7 @@ exports = module.exports = function (prjDir, urls, options) {
                     http
                         .get(requestOption, function (resp) {
                             if (resp.statusCode !== 200) {
-                                cosoleResp("Disable", requestOption.headers.host + reqPath + reqArray[id].file + " (HOST: " + requestOption.host + ')');
+                                cosoleResp('Disable', requestOption.headers.host + reqPath + reqArray[id].file + ' (HOST: ' + requestOption.host + ')');
                                 reqArray[id].ready = true;
                                 reqArray[id].content = '/* File ' + reqArray[id].file + ' Not Found. */';
                                 sendData();
@@ -640,7 +628,7 @@ exports = module.exports = function (prjDir, urls, options) {
                                     buffs.push(chunk);
                                 })
                                 .on('end', function () {
-                                    cosoleResp('Remote', requestOption.headers.host + reqPath + reqArray[id].file + " (HOST: " + requestOption.host + ')');
+                                    cosoleResp('Remote', requestOption.headers.host + reqPath + reqArray[id].file + ' (HOST: ' + requestOption.host + ')');
                                     reqArray[id].ready = true;
                                     var buff = joinbuffers(buffs);
 

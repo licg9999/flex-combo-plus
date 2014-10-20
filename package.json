@@ -1,8 +1,14 @@
 {
   "name": "flex-combo-plus",
   "version": "1.0.0",
+    
   "description": "The flex-combo-plus is combo tool designed for web front-end developer. It support various kinds of combo format by modify configuration(eg. yahoo combo).",
+    
   "main": "flex-combo-plus.js",
+    
+  "engines": {
+    "node": "~0.10.0"
+  },
   "dependencies": {
     "iconv-lite": "~0.4.0",
     "is-utf8": "~0.2.0",
@@ -17,25 +23,26 @@
     "dac": "~0.1.7"
   },
   "devDependencies": {},
+    
+  "homepage": "https://github.com/licg9999/flex-combo-plus",
   "repository": {
     "type": "git",
     "url": "https://github.com/licg9999/flex-combo-plus.git"
   },
+    
   "keywords": [
     "combo",
-    "js",
-    "node",
+    "js", "css",
     "cainiao"
   ],
-  "author": {
-    "name": "uno"
-  },
-  "license": "MIT",
-  "homepage": "https://github.com/licg9999/flex-combo-plus",
+    
   "maintainers": [
     {
       "name": "uno",
       "email": "licg9999@126.com"
     }
   ]
+  "author": "uno",
+    
+  "license": "MIT"
 }
