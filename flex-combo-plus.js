@@ -37,9 +37,7 @@ var typer = {
 
 var param = {
     urls: {},
-    hosts: {'a.tbcdn.cn': '122.225.67.241', 
-            'g.tbcdn.cn': '115.238.23.250', 
-            'g.assets.daily.taobao.net': '10.101.73.189'},
+    hosts: { 'a.tbcdn.cn' : '122.225.67.241', 'g.tbcdn.cn' : '115.238.23.250' },
     headers: {},
     servlet: '?',
     seperator: ',',
@@ -384,7 +382,7 @@ function buildRequestOption(url, req) {
 
     if (param.hosts) {
         var reqHost = req.headers.host.split(':')[0];
-        for (hostName in param.hosts) {
+        for (var hostName in param.hosts) {
             if (reqHost == hostName) {
                 requestOption.host = param.hosts[hostName];
                 requestOption.headers.host = hostName;
