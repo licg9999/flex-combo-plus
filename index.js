@@ -12,17 +12,8 @@ module.exports = (function(){
         http    = require('http'),
         
         path    = require('path'),
-        fs      = require('fs'),
+        fs      = require('fs');
         
-        crypto  = require('crypto'),
-        dac     = require('dac'),
-        isUtf8  = require('is-utf8'),
-        iconv   = require('iconv-lite'),
-        joinbuffers = require('joinbuffers'),
-        util    = require('util'),
-        mime    = require('mime'),
-        mkdirp  = require('mkdirp'),
-        readyconf = require('readyconf');
     
     function log(l){
         /**
@@ -32,8 +23,12 @@ module.exports = (function(){
     }
     
     function try2do(fn){
-        try{ fn(); }catch(e){ }
+        /**
+        fn: function(){}
+        **/
+        try{ fn() }catch(e){ }
     }
+    
     
     
     return function(rules, options){
@@ -48,25 +43,13 @@ module.exports = (function(){
         **/
         
         
-        return function(req, res){
+        return function(req, res, nex){
             
-            function error(){
-                try2do(function(){
-                    options.error(req, res);
-                });
-            }
-
             function next(){
-                try2do(function(){
-                    options.next(req, res);
-                });
+                try2do(nex);
             }
-
-            function prev(){
-                try2do(function(){
-                    options.prev(req, res);
-                });
-            }
+            
+            
             
             var source = {
                 _host: function(){
@@ -105,10 +88,6 @@ module.exports = (function(){
                     return this._url().search;
                 }
             };
-            
-            prev();
-            
-            console.log(source.pathname());
             
             next();
         };
