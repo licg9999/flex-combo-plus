@@ -26,7 +26,12 @@ module.exports = (function(){
         /**
         fn: function(){}
         **/
-        try{ fn() }catch(e){ }
+        try{ 
+            if(fn){
+                fn(); 
+            }
+        }catch(e){ 
+        }
     }
     
     
@@ -41,6 +46,8 @@ module.exports = (function(){
             nex: function(){}
         }
         **/
+        
+        
         
         
         return function(req, res, nex){
