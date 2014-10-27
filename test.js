@@ -10,7 +10,9 @@
         ], {
         });
 
-        comboFn(req, res);
+        comboFn(req, res, function(){
+            res.end();
+        });
     });
 
     server.listen(8080);
