@@ -1,19 +1,11 @@
-(function(){
+(function(http, instance){
     
-    var http = require('http');
+    http.createServer(instance([
 
-    var main = require('./index.js');
-
-    var server = http.createServer(function(req, res){
-        var comboFn = main([
-
-        ], {
-        });
-
-        comboFn(req, res, function(){
-            res.end();
-        });
-    });
-
-    server.listen(8080);
-}());
+    ], {
+        after: function(req, res){
+            console.log('OK');
+        }
+    })).listen(8080);
+    
+}(require('http'), require('./instance')));
