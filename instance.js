@@ -51,7 +51,7 @@ module.exports = (function(http, merge, Promise, nw, fs, request, response, try2
             /** configurable **/
             rules.forEach(function(rule, i){
                 rules[i] = merge.recursive({
-                    from : /^\//,
+                    from : /^\//
                 }, rule);
             });
             
@@ -111,21 +111,46 @@ module.exports = (function(http, merge, Promise, nw, fs, request, response, try2
             }else{
                 // 组装文件名字列表，分别匹配以决定是将请求本地处理还是转发到远端，组装后再一起返回
                 reqPars.filenames.forEach(function(filename, i){
-                    
-                    var fromPath = reqPars.dirname + filename,
-                        toPath   = matchedRule.to  + filename;
+                    var toPath = matchedRule.to  + filename;
                     
                     promises.push(new Promise(function(resolve, reject){
                         
                         fs.exists(toPath).then(function(isLocal){
                             
-                            if(isLocal){
+                            var bufs = [];
+                            if(!isLocal){
+                                
+                                nw.get(reqPars.toString(filename)).then(function(rs){
+                                    
+                                    rs.on('data', function(chunk){
+                                        bufs.push(chunk);
+                                    });
+                                    
+                                    rs.on('end', function(chunk){
+                                        resolve(Buffer.concat(bufs));
+                                    });
+                                }, reject);
                                 
                             }else{
                                 
+                                fs.readFile(toPath).then(function(chunk){
+                                    
+                                    resolve(chunk);
+                                    
+                                }, reject);
                             }
                         });
                     }));
+                });
+                
+                
+                Promise.all(promises).done(function(bufs){
+                    
+                    bufs.forEach(function(buf){
+                        
+                        resWrap.write(buf);
+                    });
+                    resWrap.end();
                 });
             }
             

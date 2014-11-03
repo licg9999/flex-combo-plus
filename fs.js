@@ -14,6 +14,18 @@ module.exports = (function(fs, Promise){
                     resolve(b);
                 });
             });
+        },
+        
+        readFile: function(path){
+            return new Promise(function(resolve, reject){
+                fs.readFile(path, {}, function(err, data){
+                    if(err){
+                        reject();
+                    }else{
+                        resolve(data);
+                    }
+                });
+            });
         }
     };
 }(require('fs'), 
