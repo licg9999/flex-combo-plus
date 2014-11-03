@@ -2,31 +2,24 @@
   "name": "flex-combo-plus",
   "version": "2.0.0",
   "description": "",
-    
-    
   "main": "instance.js",
   "engines": {
     "node": "~0.10.0"
   },
   "dependencies": {
-    "merge": "~1.2.0"
+    "merge": "~1.2.0",
+    "promise": "~6.0.1"
   },
   "devDependencies": {},
-    
-    
   "homepage": "https://github.com/licg9999/flex-combo-plus",
   "repository": {
     "type": "git",
     "url": "https://github.com/licg9999/flex-combo-plus.git"
   },
-    
-    
   "keywords": [
     "combo",
     "cainiao"
   ],
-    
-    
   "maintainers": [
     {
       "name": "uno",
@@ -34,7 +27,5 @@
     }
   ],
   "author": "uno",
-    
-    
   "license": "MIT"
 }

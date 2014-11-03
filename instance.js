@@ -1,8 +1,15 @@
 /**
 #convention
 :Rule
-.name: string
-.from: string|RegExp
+.name: string 
+.from: RegExp << /^\//
+.to  : string
+.isRemoteMap: boolean <! false
+/convention
+
+#convention
+:Remote
+.from: string
 .to  : string
 /convention
 
@@ -10,66 +17,119 @@
     rules  : Array<Rule> | undefined | null
     options: Object 
            .request >> ./request >> @exports.parse >> options
-           .response: Object
+           .response >> ./response >> @exports.wrap >> options
+           .remotes : Array<Remote>
+           .after   : function(req, res){
+               req: http.IncomingMessage
+               res: http.ClientRequest
+           }
+           .error   : function(req, res){ 
+               req: http.IncomingMessage
+               res: http.ClientRequest
+           } 
            | undefined | null
            
-    @return: function(req, res, nex){
+    @return: function(req, res){
         req: http.IncomingMessage
         res: http.ClientRequest
-        nex: function(){} | undefined | null
     }
 }
 **/
 
-module.exports = (function(http, fs, merge, request, try2do, log){
+module.exports = (function(http, merge, Promise, nw, fs, request, response, try2do, log){
     
     return function(rules, options){
-        /** 格式化参数 **/
         (function format(){
             if(!rules){ 
                 rules = []; 
             }
             
-            if(!options){ 
+            if(!options){
                 options = {}; 
             }
             
             /** configurable **/
+            rules.forEach(function(rule, i){
+                rules[i] = merge.recursive({
+                    from : /^\//,
+                }, rule);
+            });
+            
             options = merge.recursive({
-                response: {
-                    encoding: 'utf8'
-                },
-                after: function(req, res){
-                    
-                },
-                error: function(req, res){
-                    res.writeHead(500, { 'Content-Type': 'text/html' });
-                    res.write('<h1>500 Error</h1>', this.response.encoding);
-                    log('OK');
-                }
+                remotes: [],
+                after  : function(req, res){ },
+                error  : function(req, res){ }
             }, options);
+            
+            /** unconfigurable **/
+            rules.forEach(function(rule, i){
+                merge.recursive(rule, {
+                    isRemoteMap: false
+                });
+            });
         }());
         
+        
         return function(req, res){
+            var reqPars = request.parse(req, options.request),
+                resWrap = response.wrap(res);
             
-            var reqPars = request.parse(req, options.request);
-                                        
-            function next(){
-                try2do(options.after.bind(options, req, res), 
-                       options.error.bind(options, req, res));
-                
-                try2do(res.end.bind(res));
+            function err(){
+                try2do(options.error.bind(options, req, res));
+                resWrap.end();
             }
             
-            console.log(reqPars);
+            function nxt(){
+                try2do(options.after.bind(options, req, res), 
+                       options.error.bind(options, req, res));
+            }
             
-            next();
+            var matchedRule  = null;
+            // 找到匹配的规则，后者优先
+            rules.forEach(function(rule){
+                if(rule.from.test(reqPars.dirname)){
+                    matchedRule = rule;
+                }
+            });
+            
+            var rq = null, promises = [];
+            if(!matchedRule){
+                // 直接将请求转发到远端并返回
+                nw.get(reqPars.toString()).then(function(rs){
+                    
+                    rs.on('data', function(chunk){
+                        resWrap.write(chunk);
+                    });
+                    
+                    rs.on('end', function(){
+                        resWrap.end();
+                    });
+                    
+                }, function(e){
+                    err();
+                });
+            }else{
+                // 组装文件名字列表，分别匹配以决定是将请求本地处理还是转发到远端，组装后再一起返回
+                reqPars.filenames.forEach(function(filename, i){
+                    
+                    var fromPath = reqPars.dirname + filename,
+                        toPath   = matchedRule.to  + filename;
+                    
+                    promises.push(new Promise(function(resolve, reject){
+                        
+                        fs.exists(toPath).then(function(isLocal){
+                            
+                            if(isLocal){
+                                
+                            }else{
+                                
+                            }
+                        });
+                    }));
+                });
+            }
+            
         };
     };
-}(require('http'), 
-  require('fs'), 
-  require('merge'), 
-  require('./request'), 
-  require('./try2do'), 
-  require('./log')
- ));
+}(require('http'), require('merge'), require('promise'), 
+  require('./nw'), require('./fs'), require('./request'), require('./response'), require('./try2do'), require('./log')));
