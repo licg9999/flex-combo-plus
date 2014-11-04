@@ -5,7 +5,7 @@
             @return: Promise
         }
 **/
-module.exports = (function(fs, Promise){
+module.exports = (function(fs, Promise, log){
     
     return {
         exists: function(path){
@@ -22,11 +22,12 @@ module.exports = (function(fs, Promise){
                     if(err){
                         reject();
                     }else{
+                        log(('Disapathed to Local').cyan +
+                            (': [' + path + ']').grey);
                         resolve(data);
                     }
                 });
             });
         }
     };
-}(require('fs'), 
-  require('promise')));
+}(require('fs'), require('promise'), require('./log')));

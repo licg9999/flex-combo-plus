@@ -21,6 +21,7 @@ module.exports = (function(merge){
         this._options = options;
     }
     ResponseWrapper.prototype = {
+        
         write: function(chunk){
             var _self = this;
             _self._value.write(chunk);
@@ -34,16 +35,6 @@ module.exports = (function(merge){
     
     return {
         wrap: function(response, options){
-            (function format(){
-                if(!options){
-                    options = {};
-                }
-                
-                /** configurable **/
-                options = merge.recursive({
-                    
-                }, options);
-            }());
             
             return new ResponseWrapper(response, options);
         }

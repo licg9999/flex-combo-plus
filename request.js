@@ -7,62 +7,24 @@
 .dirname  : string
 .filenames: Array<string>
 .query    : Object
+.toString : function(filenames){
+    filenames: Array<string>
+    @return  : string
+}
 /convention
 
 @exports: Object
         .parse: function(request, options){
             request: http.IncomingMessage, 
-            options: Object
-                   .protocal: string <! 'http'
-                   .host : Object
-                         .seq  : string <! ':'
-                   .combo: Object
-                         .start: string << '??'
-                         .seq  : string << ','
-                         .dir  : string <! '/'
-                   .query: Object
-                         .start: string << '?'
-                         .seq  : string << '&'
-                         .ass  : string << '='
-                   | undefined | null
+            options >> request.fopts >> @exports >> options
             @return: UrlParts
         }
 **/
 
-module.exports = (function(querystring, merge){
+module.exports = (function(querystring, formatOptions){
     
     return {
         parse: function(request, options){
-            (function format(){
-                if(!options){
-                    options = {};
-                }
-                
-                /** configurable **/
-                options = merge.recursive({
-                    combo: {
-                        start: '??',
-                        seq  : ','
-                    },
-                    query: {
-                        start: '?',
-                        seq  : '&',
-                        ass  : '='
-                    }
-                }, options);
-
-                /** unconfigurable **/
-                merge.recursive(options, {
-                    protocal: 'http',
-                    host    : {
-                        seq: ':'
-                    },
-                    combo   : {
-                        dir: '/'
-                    }
-                });
-            }());
-
             
             var hostPars = request.headers.host.split(options.host.seq),
                 urlPath = request.url;
@@ -167,8 +129,18 @@ module.exports = (function(querystring, merge){
             }(out));
             
             (function methods(o){
+                
                 o.toString = function(filenames){
-                    var url = o.protocal + '://' + o.hostname + (o.port === 80? '': (options.host.seq + o.port)) + o.dirname;
+                    var url = o.protocal + '://';
+                    
+                    var hostname = options.remote[o.hostname];
+                    if(!hostname){
+                        hostname = o.hostname;
+                    }
+                    url += hostname;
+                    
+                    url += (o.port === 80? '': (options.host.seq + o.port)) + o.dirname;
+                    
                     if(!filenames){
                         filenames = o.filenames;
                     }
@@ -197,6 +169,4 @@ module.exports = (function(querystring, merge){
         }
     };
     
-}(require('querystring'), 
-  require('merge')
- ));
+}(require('querystring'), require('./request.fopts')));
