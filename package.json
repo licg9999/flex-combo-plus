@@ -1,13 +1,13 @@
 {
   "name": "flex-combo-plus",
-  "version": "2.0.2",
-  "description": "",
+  "version": "2.0.3",
+  "description": "process engine for aproxy",
   "main": "instance.js",
   "engines": {
     "node": "~0.10.0"
   },
   "dependencies": {
-    "colors": "^1.0.3",
+    "colors": "~1.0.3",
     "merge": "~1.2.0",
     "promise": "~6.0.1"
   },

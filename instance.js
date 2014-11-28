@@ -94,13 +94,17 @@ module.exports = (function(http, util, merge, Promise,
                        options.error.bind(options, req, res));
             }
             
-            var matchedRule  = null;
-            // 找到匹配的规则，后者优先
-            rules.forEach(function(rule){
-                if(!rule.disabled && rule.from.test(reqPars.dirname)){
-                    matchedRule = rule;
+            // 找到匹配的规则，前者优先
+            var matchedRule = (function(){
+                var i, n, rule;
+                for(i = 0, n = rules.length; i < n; i++){
+                    rule = rules[i];
+                    if(!rule.disabled && rule.from.test(reqPars.dirname)){
+                        return rule;
+                    }
                 }
-            });
+                return null;
+            }());
             
             var rq = null, promises = [];
             if(!matchedRule){

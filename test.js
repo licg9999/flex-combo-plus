@@ -5,6 +5,12 @@
     http.createServer(instance([
         {
             name: 'test1',
+            from: '/kissy/k/(\\d+\\.){2}\\d+/', 
+            to  : 'D:/Temp/01/',
+            disabled: false
+        },
+        {
+            name: 'test2',
             from: '/asdfasd/adsfa/', 
             to  : 'D:/Temp/',
             disabled: false
