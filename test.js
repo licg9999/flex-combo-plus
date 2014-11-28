@@ -5,7 +5,7 @@
     http.createServer(instance([
         {
             name: 'test1',
-            from: /^\/asdfasd\/adsfa\//, 
+            from: '/asdfasd/adsfa/', 
             to  : 'D:/Temp/',
             disabled: false
         },
@@ -13,7 +13,7 @@
             name: 'test2',
             from: /^\/kissy\/k\/1.4.2\//,
             to  : 'D:/Temp/',
-            disabled: true
+            disabled: false
         }
     ], {
         request: {

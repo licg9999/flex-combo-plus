@@ -31,7 +31,9 @@
 }
 **/
 
-module.exports = (function(http, merge, Promise, nw, fs, request, requestFopts, response, responseFopts, try2do, log){
+module.exports = (function(http, util, merge, Promise, 
+                           nw, fs, request, requestFopts, 
+                           response, responseFopts, try2do, log){
     
     return function(rules, options){
         (function format(){
@@ -65,6 +67,10 @@ module.exports = (function(http, merge, Promise, nw, fs, request, requestFopts, 
                 merge.recursive(rule, {
                     remote: false
                 });
+                
+                if(!util.isRegExp(rule.from)){
+                    rule.from = new RegExp(rule.from);
+                }
             });
             
             
@@ -83,7 +89,7 @@ module.exports = (function(http, merge, Promise, nw, fs, request, requestFopts, 
                 resWrap.end();
             }
             
-            function nex(){ // TODO nex
+            function nex(){
                 try2do(options.after.bind(options, req, res), 
                        options.error.bind(options, req, res));
             }
@@ -164,6 +170,6 @@ module.exports = (function(http, merge, Promise, nw, fs, request, requestFopts, 
             
         };
     };
-}(require('http'), require('merge'), require('promise'), 
+}(require('http'), require('util'), require('merge'), require('promise'), 
   require('./nw'), require('./fs'), require('./request'), require('./request.fopts'), 
   require('./response'), require('./response.fopts'), require('./try2do'), require('./log')));
