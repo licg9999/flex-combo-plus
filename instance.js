@@ -96,10 +96,42 @@ module.exports = (function(http, util, merge, Promise,
             
             // 找到匹配的规则，前者优先
             var matchedRule = (function(){
-                var i, n, rule;
+                var i, n, rule,
+                    dirpars, dirname, filepre;
+                
                 for(i = 0, n = rules.length; i < n; i++){
                     rule = rules[i];
                     if(!rule.disabled && rule.from.test(reqPars.dirname)){
+                        
+                        dirpars = reqPars.dirname.split(options.request.combo.dir);
+                        dirname = options.request.combo.dir;
+                        filepre = '';
+                        
+                        while(!dirpars[0]){ dirpars.shift(); }
+                        
+                        while(!dirpars[dirpars.length - 1]){ dirpars.pop(); }
+                        
+                        for(i = 0, n = dirpars.length - 1; i < n; i++){
+                            dirname += dirpars[i] + options.request.combo.dir;
+                            if(rule.from.test(dirname)){
+
+
+                                i = i + 1;
+                                n = dirpars.length;
+                                while(i < n){
+                                    filepre += dirpars[i] + options.request.combo.dir;
+                                    i++;
+                                }
+
+                                reqPars.dirname = dirname;
+                                for(i = 0, n = reqPars.filenames.length; i < n; i++){
+                                    reqPars.filenames[i] = filepre + reqPars.filenames[i];
+                                }
+
+                                return rule;
+                            }
+                        }
+                        
                         return rule;
                     }
                 }

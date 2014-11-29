@@ -7,7 +7,7 @@
             name: 'test1',
             from: '/kissy/k/(\\d+\\.){2}\\d+/', 
             to  : 'D:/Temp/01/',
-            disabled: false
+            disabled: true
         },
         {
             name: 'test2',
