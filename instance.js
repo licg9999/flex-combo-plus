@@ -5,7 +5,13 @@
 .from  : RegExp << /^\//
 .to    : string
 .disabled: boolean << false
-.remote  : boolean <! false
+
+.gitlab: Object
+       .url   : >> ./gitlab >> GitlabConfig.url
+       .token : >> ./gitlab >> GitlabConfig.token
+       .tag: Object
+           .pre: string << 'publish'
+           .mid: string << '/'
 /convention
 
 
@@ -31,28 +37,15 @@
 }
 **/
 
-module.exports = (function(http, util, merge, Promise, 
-                           nw, fs, request, requestFopts, 
+module.exports = (function(http, util, merge, Promise, colors,
+                           nw, fs, gitlab, request, requestFopts, 
                            response, responseFopts, try2do, log){
     
     return function(rules, options){
         (function format(){
-            if(!rules){ 
-                rules = []; 
-            }
+            if(!options){ options = {}; }
             
-            if(!options){
-                options = {}; 
-            }
-            
-            /** configurable **/
-            rules.forEach(function(rule, i){
-                rules[i] = merge.recursive({
-                    from    : /^\//,
-                    disabled: false
-                }, rule);
-            });
-            
+            /** options **/
             options = merge.recursive({
                 after  : function(req, res){ },
                 error  : function(req, res){
@@ -61,22 +54,42 @@ module.exports = (function(http, util, merge, Promise,
                 }
             }, options);
             
-            
-            /** unconfigurable **/
-            rules.forEach(function(rule, i){
-                merge.recursive(rule, {
-                    remote: false
-                });
-                
-                if(!util.isRegExp(rule.from)){
-                    rule.from = new RegExp(rule.from);
-                }
-            });
-            
-            
             /** sub-options **/
             options.request  = requestFopts(options.request);
             options.response = responseFopts(options.response);
+            
+            
+            if(!rules){ rules = []; }
+            
+            /** configurable **/
+            rules.forEach(function(rule, i){
+                rules[i] = merge.recursive({
+                    from    : /^\//,
+                    disabled: false
+                }, rule);
+                
+                if(rules.gitlab){
+                    rules[i].gitlab = merge.recursive({
+                        tag: {
+                            pre: 'publish',
+                            mid: '/'
+                        }
+                    }, rules.gitlab);
+                }
+            });
+            
+            /** unconfigurable **/
+            rules.forEach(function(rule, i){
+                if(!util.isRegExp(rule.from)){
+                    rule.from = new RegExp(rule.from);
+                }
+                
+                if(rule.gitlab){
+                    if(rule.gitlab.url.indexOf(options.request.protocal) !== 0){
+                        rule.gitlab.url = options.request.protocal + '://' + rule.gitlab.url;
+                    }
+                }
+            });
         }());
 
         
@@ -112,11 +125,8 @@ module.exports = (function(http, util, merge, Promise,
                         while(!dirpars[dirpars.length - 1]){ dirpars.pop(); }
                         
                         for(i = 0, n = dirpars.length - 1; i < n; i++){
-                            dirname += dirpars[i] + options.request.combo.dir;
                             if(rule.from.test(dirname)){
 
-
-                                i = i + 1;
                                 n = dirpars.length;
                                 while(i < n){
                                     filepre += dirpars[i] + options.request.combo.dir;
@@ -130,6 +140,7 @@ module.exports = (function(http, util, merge, Promise,
 
                                 return rule;
                             }
+                            dirname += dirpars[i] + options.request.combo.dir;
                         }
                         
                         return rule;
@@ -156,39 +167,83 @@ module.exports = (function(http, util, merge, Promise,
                 });
             }else{
                 
-                // 组装文件名字列表，分别匹配以决定是将请求本地处理还是转发到远端，组装后再一起返回
-                reqPars.filenames.forEach(function(filename, i){
-                    var toPath = matchedRule.to  + filename;
-                    
-                    promises.push(new Promise(function(resolve, reject){
-                        
-                        fs.exists(toPath).then(function(isLocal){
-                            
-                            var bufs = [];
-                            if(!isLocal){
-                                
-                                nw.get(reqPars.toString([filename]), options.request).then(function(rs){
-                                    
-                                    rs.on('data', function(chunk){
-                                        bufs.push(chunk);
-                                    });
-                                    
-                                    rs.on('end', function(chunk){
-                                        resolve(Buffer.concat(bufs));
-                                    });
-                                }, reject);
-                                
-                            }else{
-                                
-                                fs.readFile(toPath).then(function(chunk){
-                                    
-                                    resolve(chunk);
-                                    
-                                }, reject);
+                if(matchedRule.gitlab){
+                    reqPars.filenames.forEach(function(filename, i){
+                        var metas = {
+                            pars: {
+                                far: filename,
+                                reg: /^[^\/]+\/[^\/]+\/(\d+\.){2}\d+\//g,
+                                val: '',
+                                proj: {
+                                    reg: /^[^\/]+\/[^\/]+/g,
+                                    val: ''
+                                },
+                                vers: {
+                                    reg: /(\d+\.){2}\d+/g,
+                                    val: ''
+                                }
                             }
-                        });
-                    }));
-                });
+                        };
+                        
+                        metas.pars.val = filename.match(metas.pars.reg);
+                        
+                        if(metas.pars.val){
+                            metas.pars.val = metas.pars.val[0];
+                            
+                            metas.pars.proj.val = metas.pars.val.match(metas.pars.proj.reg)[0];
+                            metas.pars.vers.val = metas.pars.val.match(metas.pars.vers.reg)[0];
+                            
+                            filename = matchedRule.to + filename.replace(metas.pars.val, '');
+                            
+                            promises.push(gitlab.file(matchedRule.gitlab, {
+                                project : metas.pars.proj.val,
+                                branch  : matchedRule.gitlab.tag.pre + 
+                                          matchedRule.gitlab.tag.mid + 
+                                          metas.pars.vers.val,
+                                filename: filename
+                            }));
+                            
+                        }else {
+                            log(('Unmatched request').red + 
+                                (': [' + reqPars.toString(filename) + ']').grey);
+                        }
+                    });
+                }else {
+                    // 组装文件名字列表，分别匹配以决定是将请求本地处理还是转发到远端，组装后再一起返回
+                    reqPars.filenames.forEach(function(filename, i){
+                        var toPath = matchedRule.to  + filename;
+
+                        promises.push(new Promise(function(resolve, reject){
+
+                            fs.exists(toPath).then(function(isLocal){
+
+                                var bufs = [];
+                                if(!isLocal){
+
+                                    nw.get(reqPars.toString([filename]), options.request).then(function(rs){
+
+                                        rs.on('data', function(chunk){
+                                            bufs.push(chunk);
+                                        });
+
+                                        rs.on('end', function(chunk){
+                                            resolve(Buffer.concat(bufs));
+                                        });
+                                    }, reject);
+
+                                }else{
+
+                                    fs.readFile(toPath).then(function(chunk){
+
+                                        resolve(chunk);
+
+                                    }, reject);
+                                }
+                            });
+                        }));
+                    });
+                }
+                
                 
                 
                 Promise.all(promises).done(function(bufs){
@@ -206,6 +261,6 @@ module.exports = (function(http, util, merge, Promise,
             
         };
     };
-}(require('http'), require('util'), require('merge'), require('promise'), 
-  require('./nw'), require('./fs'), require('./request'), require('./request.fopts'), 
+}(require('http'), require('util'), require('merge'), require('promise'), require('colors'),
+  require('./nw'), require('./fs'), require('./gitlab'), require('./request'), require('./request.fopts'), 
   require('./response'), require('./response.fopts'), require('./try2do'), require('./log')));

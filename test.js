@@ -11,14 +11,21 @@
         },
         {
             name: 'test2',
-            from: '/asdfasd/adsfa/', 
+            from: /^\/kissy\/k\/1\.4\.2\//,
             to  : 'D:/Temp/',
-            disabled: false
+            disabled: true
         },
         {
-            name: 'test2',
-            from: /^\/kissy\/k\/1.4.2\//,
-            to  : 'D:/Temp/',
+            name: 'test4',
+            to  : 'src/',
+            gitlab: {
+                url   : 'your-gitlab-url',
+                token : 'your-private-token',
+                tag: {
+                    pre: 'publish',
+                    mid: '/'
+                }
+            },
             disabled: false
         }
     ], {

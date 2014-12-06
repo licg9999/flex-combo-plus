@@ -11,12 +11,11 @@ module.exports = (function(http, url, Promise, colors, log){
     return {
         get: function(urlStr, options){
             
-            
             return new Promise(function(resolve, reject){
-                
+
                 var urlPars = url.parse(urlStr),
                     hostname = options.remote.reversed[urlPars.hostname];
-                
+
                 if(hostname){
                     urlPars.headers = { host: hostname };
                 }else{
@@ -29,15 +28,15 @@ module.exports = (function(http, url, Promise, colors, log){
                     reject();
                     return;
                 }
-                
+
                 http.get(urlPars, function(res){
-                    
+
                     log(('Dispatched to Remote(' + hostname + ')').magenta +
                         (': [' + urlStr + ']').grey);
                     resolve(res);
-                    
+
                 }).on('error', function(e){
-                    
+
                     reject(e);
                 });
             });
