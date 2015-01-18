@@ -1,5 +1,5 @@
 node_modules/
 .gitignore
-README.md
+.npmignore
 gitlab.js
 test.js

@@ -31,7 +31,7 @@
 **/
 
 module.exports = (function(http, util, merge, Promise, colors,
-                           nw, fs, gitlab, request, requestFopts, 
+                           nw, fs, request, requestFopts, 
                            response, responseFopts, try2do){
     
     return function(rules, options){
@@ -278,5 +278,5 @@ module.exports = (function(http, util, merge, Promise, colors,
         };
     };
 }(require('http'), require('util'), require('merge'), require('promise'), require('colors'),
-  require('./nw'), require('./fs'), require('./gitlab'), require('./request'), require('./request.fopts'), 
+  require('./nw'), require('./fs'), require('./request'), require('./request.fopts'), 
   require('./response'), require('./response.fopts'), require('./try2do')));
