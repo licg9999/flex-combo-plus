@@ -6,15 +6,22 @@
         {
             name: 'test1',
             from: '/kissy/k/(\\d+\\.){2}\\d+/', 
-            to  : 'D:/Temp/01/',
-            disabled: true
+            to  : '/home/uno/Temp/',
+            disabled: false
         },
         {
             name: 'test2',
-            from: /^\/kissy\/k\/1\.4\.2\//,
-            to  : 'D:/Temp/',
-            disabled: true
+            from: '/kissy/l/(\\d+\\.){2}\\d+/', 
+            to  : '/home/uno/Temp/',
+            disabled: false
         },
+        {
+            name: 'test3',
+            from: /^\/kissy\/k\/1\.4\.2\//,
+            to  : '',
+            disabled: true
+        }
+        /*,
         {
             name: 'test4',
             to  : 'src/',
@@ -28,6 +35,7 @@
             },
             disabled: false
         }
+        */
     ], {
         request: {
             remote: {

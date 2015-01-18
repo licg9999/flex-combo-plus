@@ -47,7 +47,25 @@ module.exports = (function(querystring, formatOptions){
             }
 
 
-            var out = {};
+            var out = new (function(){
+                function Out(){}
+                Out.prototype = {
+                    resolveDirname: function(i){
+                        var _self = this;
+                        var resolvedDirname = _self.dirname + _self.filenames[i];
+                        resolvedDirname = resolvedDirname.substring(0, resolvedDirname.lastIndexOf(options.combo.dir) + 1);
+                        return resolvedDirname;
+                    },
+                    resolveFilename: function(i){
+                        var _self = this;
+                        var resolvedFilename = _self.filenames[i];
+                        resolvedFilename = resolvedFilename.substring(resolvedFilename.lastIndexOf(options.combo.dir) + 1, 
+                            resolvedFilename.length);
+                        return resolvedFilename;
+                    }
+                };
+                return Out;
+            }());
             
             (function protocal(o){
                 o.protocal = options.protocal;
@@ -130,7 +148,7 @@ module.exports = (function(querystring, formatOptions){
             
             (function methods(o){
                 
-                o.toString = function(filenames){
+                o.toString = function(filenameIndexes){
                     var url = o.protocal + '://';
                     
                     var hostname = options.remote[o.hostname];
@@ -141,7 +159,13 @@ module.exports = (function(querystring, formatOptions){
                     
                     url += (o.port === 80? '': (options.host.seq + o.port)) + o.dirname;
                     
-                    if(!filenames){
+                    var filenames;
+                    if(filenameIndexes){
+                        filenames = [];
+                        filenameIndexes.forEach(function(filenameIndex){
+                            filenames.push(o.filenames[filenameIndex]);
+                        });
+                    }else {
                         filenames = o.filenames;
                     }
                     

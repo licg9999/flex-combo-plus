@@ -106,10 +106,103 @@ module.exports = (function(http, util, merge, Promise, colors,
                 try2do(options.after.bind(options, req, res), 
                        options.error.bind(options, req, res));
             }
+
+
+            function test(success, error, end){
+                success = success || function(){};
+                error   = error   || function(){};
+                end     = end     || function(){};
+
+                var hasMatched = false;
+                reqPars.filenames.forEach(function(filename, i){
+                    // 找到匹配的规则，前者优先
+                    var j, n, rule;
+                    for(j = 0, n = rules.length; j < n; j++){
+                        rule = rules[j];
+                        if(rule.disabled){
+                            continue;
+                        }
+                        if(rule.from.test(reqPars.resolveDirname(i))){
+                            hasMatched = true;
+                            break;
+                        }
+                    }
+
+                    if(j < n){
+                        success(rule, i);
+                    }else {
+                        error(null, i);
+                    }
+                });
+
+                end(hasMatched);
+
+                return hasMatched;
+            }
             
+            if(test()){
+                var promises = [];
+                test(function(rule, filenameIndex){
+                    var toPath = rule.to + reqPars.resolveFilename(filenameIndex);
+                    promises.push(new Promise(function(resolve, reject){
+                        fs.exists(toPath).then(function(isLocal){
+                            if(isLocal){
+                                fs.readFile(toPath).then(function(chunk){
+                                    resolve(chunk);
+                                }, reject);
+                            }else {
+                                var bufs = [];
+                                nw.get(reqPars.toString([filenameIndex]), options.request).then(function(rs){
+                                    rs.on('data', function(chunk){
+                                        bufs.push(chunk);
+                                    });
+                                    rs.on('end', function(chunk){
+                                        resolve(Buffer.concat(bufs));
+                                    });
+                                }, reject);
+                            }
+                        });
+                    }));
+                }, function(rule, filenameIndex){
+                    promises.push(new Promise(function(resolve, reject){
+                        var bufs = [];
+                        nw.get(reqPars.toString([filenameIndex]), options.request).then(function(rs){
+                            rs.on('data', function(chunk){
+                                bufs.push(chunk);
+                            });
+                            rs.on('end', function(chunk){
+                                resolve(Buffer.concat(bufs));
+                            });
+                        }, reject);
+                    }));
+                }, function(){
+                    Promise.all(promises).done(function(bufs){
+                        bufs.forEach(function(buf){
+                            resWrap.write(buf);
+                        });
+                        resWrap.end();
+                    }, function(es){
+                        err();
+                    });
+                });
+            }else {
+                // 直接将当前请求转发到远端并返回
+                nw.get(reqPars.toString(), options.request).then(function(rs){
+                    rs.on('data', function(chunk){
+                        resWrap.write(chunk);
+                    });
+                    rs.on('end', function(){
+                        resWrap.end();
+                    });
+                }, function(e){
+                    err();
+                });
+            }
+
+            /*
             // 找到匹配的规则，前者优先
             var matchedRule = (function(){
-                var i, n, rule,
+                var i, n, j, m, rule,
                     dirpars, dirname, filepre;
                 
                 for(i = 0, n = rules.length; i < n; i++){
@@ -259,6 +352,7 @@ module.exports = (function(http, util, merge, Promise, colors,
                 });
             }
             
+            */
         };
     };
 }(require('http'), require('util'), require('merge'), require('promise'), require('colors'),
