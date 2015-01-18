@@ -86,9 +86,9 @@ module.exports = (function(http, util, merge, Promise, colors,
             }
 
 
-            var hasMached = false;
+            var hasMatched = false;
             reqPars.filenames.forEach(function(filename, filenameIndex){
-                if(hasMached){
+                if(hasMatched){
                     return;
                 }
 
@@ -106,70 +106,6 @@ module.exports = (function(http, util, merge, Promise, colors,
                 }
             });
 
-            function test(success, error, end){
-                success = success || function(){};
-                error   = error   || function(){};
-                end     = end     || function(){};
-
-                var hasMatched = false,
-                    oldDirname = reqPars.dirname,
-                    matched, dirpars, dirname, filepre;
-                reqPars.filenames.forEach(function(filename, filenameIndex){
-                    reqPars.dirname = oldDirname;
-                    matched = false;
-                    // 找到匹配的规则，前者优先
-                    var i, n, rule;
-                    for(i = 0, n = rules.length; i < n; i++){
-                        rule = rules[i];
-                        if(rule.disabled){
-                            continue;
-                        }
-
-                        dirname = reqPars.resolveDirname(filenameIndex);
-                        if(rule.from.test(dirname)){
-                            hasMatched = true;
-                            matched = true;
-
-                            dirpars = dirname.split(options.request.combo.dir);
-                            while(!dirpars[0]){ dirpars.shift(); }
-                            while(!dirpars[dirpars.length - 1]){ dirpars.pop(); }
-                                
-                            dirname = options.request.combo.dir;
-                            filepre = ''; 
-                            
-                            for(i = 0, n = dirpars.length; i < n; i++){
-                                dirname += dirpars[i] + options.request.combo.dir;
-                                if(rule.from.test(dirname)){
-
-                                    i = i + 1;
-                                    n = dirpars.length;
-                                    while(i < n){ 
-                                        filepre += dirpars[i] + options.request.combo.dir;
-                                        i++;
-                                    }   
-
-                                    oldDirname = reqPars.dirname;
-                                    reqPars.dirname = dirname;
-                                    reqPars.filenames[filenameIndex] = filepre + reqPars.resolveFilename(filenameIndex);
-                                    break;
-                                }   
-                            }   
-                            break;
-                        }
-                    }
-
-                    if(matched){
-                        success(rule, filenameIndex);
-                    }else {
-                        error(null, filenameIndex);
-                    }
-                });
-
-                end(hasMatched);
-
-                return hasMatched;
-            }
-            
             if(hasMatched){
                 var promises = [];
                 reqPars.filenames.forEach(function(filename, filenameIndex){
