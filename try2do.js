@@ -4,7 +4,7 @@
     err: function(e){ e: Error } | undefined | null
 }
 **/
-module.exports = (function(log){
+module.exports = (function(){
     return function try2do(foo, err){
         try{
             foo();
@@ -14,4 +14,4 @@ module.exports = (function(log){
             }
         }
     };
-}(require('./log')));
+}());

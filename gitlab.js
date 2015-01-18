@@ -8,19 +8,19 @@
 
 /**
 @exports: Object
-        .file: function(config, params){
+        .file: function(params, config){
             config: GitlabConfig
             params: Object
                   .project : string
                   .branch  : string
-                  .filename: string
-            @return  : Promise
+                  .filepath: string
+            @return: Promise
         }
 **/
 module.exports = (function(Gitlab, Promise, log){
     var cache = {};
     function instance(config){
-        var key = config.host + config.token;
+        var key = config.url + config.token;
         if(cache[key]){
             return cache[key];
         }else {
@@ -29,19 +29,18 @@ module.exports = (function(Gitlab, Promise, log){
     }
     
     return {
-        file: function(config, params){
+        file: function(params, config){
             return new Promise(function(resolve, reject){
                 instance(config).projects.repository.showFile({
                     projectId: params.project,
                     ref      : params.branch,
-                    file_path: params.filename
+                    file_path: params.filepath
                 }, function(data){
                     if(data){
                         log(('Dispatched to gitlab(' + config.url + ')').magenta +
                             (': ' + JSON.stringify(params)).grey);
                         resolve(new Buffer(data.content, data.encoding));
                     }else {
-                        
                         reject();
                     }
                 });

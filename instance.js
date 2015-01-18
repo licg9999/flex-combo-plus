@@ -5,13 +5,6 @@
 .from  : RegExp << /^\//
 .to    : string
 .disabled: boolean << false
-
-.gitlab: Object
-       .url   : >> ./gitlab >> GitlabConfig.url
-       .token : >> ./gitlab >> GitlabConfig.token
-       .tag: Object
-           .pre: string << 'publish'
-           .mid: string << '/'
 /convention
 
 
@@ -39,7 +32,7 @@
 
 module.exports = (function(http, util, merge, Promise, colors,
                            nw, fs, gitlab, request, requestFopts, 
-                           response, responseFopts, try2do, log){
+                           response, responseFopts, try2do){
     
     return function(rules, options){
         (function format(){
@@ -67,27 +60,12 @@ module.exports = (function(http, util, merge, Promise, colors,
                     from    : /^\//,
                     disabled: false
                 }, rule);
-                
-                if(rules.gitlab){
-                    rules[i].gitlab = merge.recursive({
-                        tag: {
-                            pre: 'publish',
-                            mid: '/'
-                        }
-                    }, rules.gitlab);
-                }
             });
             
             /** unconfigurable **/
             rules.forEach(function(rule, i){
                 if(!util.isRegExp(rule.from)){
                     rule.from = new RegExp(rule.from);
-                }
-                
-                if(rule.gitlab){
-                    if(rule.gitlab.url.indexOf(options.request.protocal) !== 0){
-                        rule.gitlab.url = options.request.protocal + '://' + rule.gitlab.url;
-                    }
                 }
             });
         }());
@@ -108,30 +86,82 @@ module.exports = (function(http, util, merge, Promise, colors,
             }
 
 
+            var hasMached = false;
+            reqPars.filenames.forEach(function(filename, filenameIndex){
+                if(hasMached){
+                    return;
+                }
+
+                var i, n, rule;
+                for(i = 0, n = rules.length; i < n; i++){
+
+                    rule = rules[i];
+                    if(rule.disabled){
+                        continue;
+                    }
+
+                    if(rule.from.test(reqPars.resolveDirname(filenameIndex))){
+                        hasMatched = true;
+                    }
+                }
+            });
+
             function test(success, error, end){
                 success = success || function(){};
                 error   = error   || function(){};
                 end     = end     || function(){};
 
-                var hasMatched = false;
-                reqPars.filenames.forEach(function(filename, i){
+                var hasMatched = false,
+                    oldDirname = reqPars.dirname,
+                    matched, dirpars, dirname, filepre;
+                reqPars.filenames.forEach(function(filename, filenameIndex){
+                    reqPars.dirname = oldDirname;
+                    matched = false;
                     // 找到匹配的规则，前者优先
-                    var j, n, rule;
-                    for(j = 0, n = rules.length; j < n; j++){
-                        rule = rules[j];
+                    var i, n, rule;
+                    for(i = 0, n = rules.length; i < n; i++){
+                        rule = rules[i];
                         if(rule.disabled){
                             continue;
                         }
-                        if(rule.from.test(reqPars.resolveDirname(i))){
+
+                        dirname = reqPars.resolveDirname(filenameIndex);
+                        if(rule.from.test(dirname)){
                             hasMatched = true;
+                            matched = true;
+
+                            dirpars = dirname.split(options.request.combo.dir);
+                            while(!dirpars[0]){ dirpars.shift(); }
+                            while(!dirpars[dirpars.length - 1]){ dirpars.pop(); }
+                                
+                            dirname = options.request.combo.dir;
+                            filepre = ''; 
+                            
+                            for(i = 0, n = dirpars.length; i < n; i++){
+                                dirname += dirpars[i] + options.request.combo.dir;
+                                if(rule.from.test(dirname)){
+
+                                    i = i + 1;
+                                    n = dirpars.length;
+                                    while(i < n){ 
+                                        filepre += dirpars[i] + options.request.combo.dir;
+                                        i++;
+                                    }   
+
+                                    oldDirname = reqPars.dirname;
+                                    reqPars.dirname = dirname;
+                                    reqPars.filenames[filenameIndex] = filepre + reqPars.resolveFilename(filenameIndex);
+                                    break;
+                                }   
+                            }   
                             break;
                         }
                     }
 
-                    if(j < n){
-                        success(rule, i);
+                    if(matched){
+                        success(rule, filenameIndex);
                     }else {
-                        error(null, i);
+                        error(null, filenameIndex);
                     }
                 });
 
@@ -140,221 +170,113 @@ module.exports = (function(http, util, merge, Promise, colors,
                 return hasMatched;
             }
             
-            if(test()){
+            if(hasMatched){
                 var promises = [];
-                test(function(rule, filenameIndex){
-                    var toPath = rule.to + reqPars.resolveFilename(filenameIndex);
-                    promises.push(new Promise(function(resolve, reject){
-                        fs.exists(toPath).then(function(isLocal){
-                            if(isLocal){
-                                fs.readFile(toPath).then(function(chunk){
-                                    resolve(chunk);
-                                }, reject);
-                            }else {
-                                var bufs = [];
-                                nw.get(reqPars.toString([filenameIndex]), options.request).then(function(rs){
-                                    rs.on('data', function(chunk){
-                                        bufs.push(chunk);
-                                    });
-                                    rs.on('end', function(chunk){
-                                        resolve(Buffer.concat(bufs));
-                                    });
-                                }, reject);
-                            }
-                        });
-                    }));
-                }, function(rule, filenameIndex){
-                    promises.push(new Promise(function(resolve, reject){
-                        var bufs = [];
-                        nw.get(reqPars.toString([filenameIndex]), options.request).then(function(rs){
-                            rs.on('data', function(chunk){
-                                bufs.push(chunk);
-                            });
-                            rs.on('end', function(chunk){
-                                resolve(Buffer.concat(bufs));
-                            });
-                        }, reject);
-                    }));
-                }, function(){
-                    Promise.all(promises).done(function(bufs){
-                        bufs.forEach(function(buf){
-                            resWrap.write(buf);
-                        });
-                        resWrap.end();
-                    }, function(es){
-                        err();
-                    });
-                });
-            }else {
-                // 直接将当前请求转发到远端并返回
-                nw.get(reqPars.toString(), options.request).then(function(rs){
-                    rs.on('data', function(chunk){
-                        resWrap.write(chunk);
-                    });
-                    rs.on('end', function(){
-                        resWrap.end();
-                    });
-                }, function(e){
-                    err();
-                });
-            }
-
-            /*
-            // 找到匹配的规则，前者优先
-            var matchedRule = (function(){
-                var i, n, j, m, rule,
-                    dirpars, dirname, filepre;
-                
-                for(i = 0, n = rules.length; i < n; i++){
-                    rule = rules[i];
-                    if(!rule.disabled && rule.from.test(reqPars.dirname)){
-                        
-                        dirpars = reqPars.dirname.split(options.request.combo.dir);
-                        dirname = options.request.combo.dir;
-                        filepre = '';
-                        
-                        while(!dirpars[0]){ dirpars.shift(); }
-                        
-                        while(!dirpars[dirpars.length - 1]){ dirpars.pop(); }
-                        
-                        for(i = 0, n = dirpars.length - 1; i < n; i++){
-                            if(rule.from.test(dirname)){
-
-                                n = dirpars.length;
-                                while(i < n){
-                                    filepre += dirpars[i] + options.request.combo.dir;
-                                    i++;
-                                }
-
-                                reqPars.dirname = dirname;
-                                for(i = 0, n = reqPars.filenames.length; i < n; i++){
-                                    reqPars.filenames[i] = filepre + reqPars.filenames[i];
-                                }
-
-                                return rule;
-                            }
-                            dirname += dirpars[i] + options.request.combo.dir;
+                reqPars.filenames.forEach(function(filename, filenameIndex){
+                    var i, n, rule, 
+                        toPath, dirname, dirpars, filepre;
+                    for(i = 0, n = rules.length; i < n; i++){
+                        rule = rules[i];
+                        if(rule.disabled){
+                            continue;
                         }
-                        
-                        return rule;
+
+                        dirname = reqPars.resolveDirname(filenameIndex);
+                        if(rule.from.test(dirname)){
+                            toPath  = rule.to;
+                            dirpars = dirname.split(options.request.combo.dir);
+                            while(!dirpars[0]){ dirpars.shift(); }
+                            while(!dirpars[dirpars.length - 1]){ dirpars.pop(); }
+                                
+                            dirname = options.request.combo.dir;
+                            filepre = ''; 
+                            for(i = 0, n = dirpars.length; i < n; i++){
+                                dirname += dirpars[i] + options.request.combo.dir;
+
+                                if(rule.from.test(dirname)){
+                                    i = i + 1;
+                                    n = dirpars.length;
+                                    while(i < n){ 
+                                        filepre += dirpars[i] + options.request.combo.dir;
+                                        i++;
+                                    }   
+
+                                    toPath += filepre + reqPars.resolveFilename(filenameIndex);
+                                    break;
+                                }   
+                            }   
+                            break;
+                        }
                     }
-                }
-                return null;
-            }());
-            
-            var rq = null, promises = [];
-            if(!matchedRule){
-                // 直接将请求转发到远端并返回
-                nw.get(reqPars.toString(), options.request).then(function(rs){
-                    
-                    rs.on('data', function(chunk){
-                        resWrap.write(chunk);
-                    });
-                    
-                    rs.on('end', function(){
-                        resWrap.end();
-                    });
-                    
-                }, function(e){
-                    err();
-                });
-            }else{
-                
-                if(matchedRule.gitlab){
-                    reqPars.filenames.forEach(function(filename, i){
-                        var metas = {
-                            pars: {
-                                far: filename,
-                                reg: /^[^\/]+\/[^\/]+\/(\d+\.){2}\d+\//g,
-                                val: '',
-                                proj: {
-                                    reg: /^[^\/]+\/[^\/]+/g,
-                                    val: ''
-                                },
-                                vers: {
-                                    reg: /(\d+\.){2}\d+/g,
-                                    val: ''
-                                }
-                            }
-                        };
-                        
-                        metas.pars.val = filename.match(metas.pars.reg);
-                        
-                        if(metas.pars.val){
-                            metas.pars.val = metas.pars.val[0];
-                            
-                            metas.pars.proj.val = metas.pars.val.match(metas.pars.proj.reg)[0];
-                            metas.pars.vers.val = metas.pars.val.match(metas.pars.vers.reg)[0];
-                            
-                            filename = matchedRule.to + filename.replace(metas.pars.val, '');
-                            
-                            promises.push(gitlab.file(matchedRule.gitlab, {
-                                project : metas.pars.proj.val,
-                                branch  : matchedRule.gitlab.tag.pre + 
-                                          matchedRule.gitlab.tag.mid + 
-                                          metas.pars.vers.val,
-                                filename: filename
-                            }));
-                            
-                        }else {
-                            log(('Unmatched request').red + 
-                                (': [' + reqPars.toString(filename) + ']').grey);
-                        }
-                    });
-                }else {
-                    // 组装文件名字列表，分别匹配以决定是将请求本地处理还是转发到远端，组装后再一起返回
-                    reqPars.filenames.forEach(function(filename, i){
-                        var toPath = matchedRule.to  + filename;
 
+                    if(toPath){
                         promises.push(new Promise(function(resolve, reject){
-
                             fs.exists(toPath).then(function(isLocal){
-
-                                var bufs = [];
-                                if(!isLocal){
-
-                                    nw.get(reqPars.toString([filename]), options.request).then(function(rs){
-
+                                if(isLocal){
+                                    fs.readFile(toPath).then(function(chunk){
+                                        resolve(chunk);
+                                    }, reject);
+                                }else {
+                                    var bufs = [];
+                                    nw.get(reqPars.toString([filenameIndex]), options.request).then(function(rs){
                                         rs.on('data', function(chunk){
                                             bufs.push(chunk);
                                         });
-
                                         rs.on('end', function(chunk){
                                             resolve(Buffer.concat(bufs));
                                         });
                                     }, reject);
-
-                                }else{
-
-                                    fs.readFile(toPath).then(function(chunk){
-
-                                        resolve(chunk);
-
-                                    }, reject);
                                 }
                             });
                         }));
-                    });
-                }
-                
-                
-                
+                    }else {
+                        promises.push(new Promise(function(resolve, reject){
+                            var bufs = [];
+                            nw.get(reqPars.toString([filenameIndex]), options.request).then(function(rs){
+
+                                rs.on('data', function(chunk){
+                                    bufs.push(chunk);
+                                });
+
+                                rs.on('end', function(chunk){
+                                    resolve(Buffer.concat(bufs));
+                                });
+
+                            }, reject);
+                        }));
+                    }
+                });
+
                 Promise.all(promises).done(function(bufs){
-                    
+
                     bufs.forEach(function(buf){
-                        
                         resWrap.write(buf);
                     });
+
                     resWrap.end();
-                    
+
                 }, function(es){
                     err();
                 });
+            }else {
+                // 直接将当前请求转发到远端并返回
+                nw.get(reqPars.toString(), options.request).then(function(rs){
+
+                    rs.on('data', function(chunk){
+                        resWrap.write(chunk);
+                    });
+
+                    rs.on('end', function(){
+                        resWrap.end();
+                    });
+
+                }, function(e){
+                    err();
+                });
             }
-            
-            */
+
         };
     };
 }(require('http'), require('util'), require('merge'), require('promise'), require('colors'),
   require('./nw'), require('./fs'), require('./gitlab'), require('./request'), require('./request.fopts'), 
-  require('./response'), require('./response.fopts'), require('./try2do'), require('./log')));
+  require('./response'), require('./response.fopts'), require('./try2do')));
