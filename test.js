@@ -7,7 +7,7 @@
             name: 'test1',
             from: '/kissy/k/(\\d+\\.){2}\\d+/', 
             to  : '/home/uno/Temp/d/',
-            disabled: false
+            disabled: true
         },
         {
             name: 'test2',

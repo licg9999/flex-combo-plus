@@ -21,6 +21,11 @@ module.exports = (function(merge){
         this._options = options;
     }
     ResponseWrapper.prototype = {
+
+        writeHead: function(statusCode, headers){
+            var _self = this;
+            _self._value.writeHead(statusCode, headers);
+        },
         
         write: function(chunk){
             var _self = this;

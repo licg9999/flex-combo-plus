@@ -43,7 +43,7 @@ module.exports = (function(http, util, merge, Promise, colors,
                 after  : function(req, res){ },
                 error  : function(req, res){
                     res.writeHead(500, {'Content-Type': 'text/html'});
-                    res.end('<h1 color="#900">Error 500</h1>');
+                    res.end('<h1 style="color: #900">Error 500</h1>');
                 }
             }, options);
             
@@ -146,27 +146,46 @@ module.exports = (function(http, util, merge, Promise, colors,
                     }
 
                     if(toPath){
+
                         promises.push(new Promise(function(resolve, reject){
                             fs.exists(toPath).then(function(isLocal){
+
                                 if(isLocal){
+
                                     fs.readFile(toPath).then(function(chunk){
-                                        resolve(chunk);
+
+                                        resolve({
+                                            isLocal: true,
+                                            statusCode: 200,
+                                            headers: {}, // TODO calculate headers
+                                            chunk: chunk
+                                        });
                                     }, reject);
+
                                 }else {
                                     var bufs = [];
                                     nw.get(reqPars.toString([filenameIndex]), options.request).then(function(rs){
+
                                         rs.on('data', function(chunk){
                                             bufs.push(chunk);
                                         });
-                                        rs.on('end', function(chunk){
-                                            resolve(Buffer.concat(bufs));
+
+                                        rs.on('end', function(){
+                                            resolve({
+                                                isLocal: false,
+                                                statusCode: rs.statusCode,
+                                                headers: rs.headers,
+                                                chunk  : Buffer.concat(bufs)
+                                            });
                                         });
+
                                     }, reject);
                                 }
                             });
                         }));
                     }else {
                         promises.push(new Promise(function(resolve, reject){
+
                             var bufs = [];
                             nw.get(reqPars.toString([filenameIndex]), options.request).then(function(rs){
 
@@ -174,8 +193,13 @@ module.exports = (function(http, util, merge, Promise, colors,
                                     bufs.push(chunk);
                                 });
 
-                                rs.on('end', function(chunk){
-                                    resolve(Buffer.concat(bufs));
+                                rs.on('end', function(){
+                                    resolve({
+                                        isLocal: false,
+                                        statusCode: rs.statusCode,
+                                        headers: rs.headers,
+                                        chunk  : Buffer.concat(bufs)
+                                    });
                                 });
 
                             }, reject);
@@ -183,13 +207,31 @@ module.exports = (function(http, util, merge, Promise, colors,
                     }
                 });
 
-                Promise.all(promises).done(function(bufs){
+                Promise.all(promises).done(function(hbufs){
 
-                    bufs.forEach(function(buf){
-                        resWrap.write(buf);
+                    var index = -1;
+                    hbufs.forEach(function(hbuf, i){
+                        if(hbuf.statusCode >= 400){
+                            index = i;
+                        }
                     });
 
-                    resWrap.end();
+                    if(index >= 0){
+                        resWrap.writeHead(hbufs[index].statusCode, hbufs[index].headers);
+                        resWrap.write(hbufs[index].chunk);
+                        resWrap.end();
+
+                    }else {
+
+                        // TODO calculate headers
+                        // 网络请求中的头部信息优先，其次是本地代理计算的头部信息
+                        // 不论从时序、顺序，都是后者优先
+                        hbufs.forEach(function(hbuf){
+                            resWrap.write(hbuf.chunk);
+                        });
+
+                        resWrap.end();
+                    }
 
                 }, function(es){
                     err();
@@ -197,6 +239,7 @@ module.exports = (function(http, util, merge, Promise, colors,
             }else {
                 // 直接将当前请求转发到远端并返回
                 nw.get(reqPars.toString(), options.request).then(function(rs){
+                    resWrap.writeHead(rs.statusCode, rs.headers);
 
                     rs.on('data', function(chunk){
                         resWrap.write(chunk);
