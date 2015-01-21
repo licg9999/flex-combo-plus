@@ -30,7 +30,7 @@
 }
 **/
 
-module.exports = (function(http, util, merge, Promise, colors,
+module.exports = (function(http, util, merge, Promise, colors, mime,
                            nw, fs, request, requestFopts, 
                            response, responseFopts, try2do){
     
@@ -148,31 +148,45 @@ module.exports = (function(http, util, merge, Promise, colors,
                     if(toPath){
 
                         promises.push(new Promise(function(resolve, reject){
-                            fs.exists(toPath).then(function(isLocal){
+                            fs.exists(toPath).done(function(isLocal){
 
                                 if(isLocal){
 
-                                    fs.readFile(toPath).then(function(chunk){
+                                    fs.readFile(toPath).done(function(chunk){
 
-                                        resolve({
-                                            isLocal: true,
-                                            statusCode: 200,
-                                            headers: {}, // TODO calculate headers
-                                            chunk: chunk
-                                        });
+                                        fs.stat(toPath).done(function(stats){
+                                            resolve({
+                                                type: 0x1, // binary: 01
+                                                statusCode: 200,
+                                                headers: {
+                                                    'content-type': mime.lookup(toPath),
+                                                    'content-length': stats.size,
+                                                    'last-modified': stats.mtime.getTime(),
+                                                    'server': 'aproxy',
+                                                    'access-control-allow-origin': '*'
+                                                },
+                                                chunk: chunk
+                                            });
+                                        }, reject);
                                     }, reject);
 
                                 }else {
                                     var bufs = [];
-                                    nw.get(reqPars.toString([filenameIndex]), options.request).then(function(rs){
+                                    nw.get(reqPars.toString([filenameIndex]), options.request).done(function(rs){
 
                                         rs.on('data', function(chunk){
                                             bufs.push(chunk);
                                         });
 
                                         rs.on('end', function(){
+                                            if(rs.headers['last-modified']){
+                                                rs.headers['last-modified'] = Date.parse(rs.headers['last-modified']);
+                                            }
+                                            if(rs.headers['content-length']){
+                                                rs.headers['content-length'] = +rs.headers['content-length'];
+                                            }
                                             resolve({
-                                                isLocal: false,
+                                                type: 0x3, // binary: 11
                                                 statusCode: rs.statusCode,
                                                 headers: rs.headers,
                                                 chunk  : Buffer.concat(bufs)
@@ -187,15 +201,21 @@ module.exports = (function(http, util, merge, Promise, colors,
                         promises.push(new Promise(function(resolve, reject){
 
                             var bufs = [];
-                            nw.get(reqPars.toString([filenameIndex]), options.request).then(function(rs){
+                            nw.get(reqPars.toString([filenameIndex]), options.request).done(function(rs){
 
                                 rs.on('data', function(chunk){
                                     bufs.push(chunk);
                                 });
 
                                 rs.on('end', function(){
+                                    if(rs.headers['last-modified']){
+                                        rs.headers['last-modified'] = Date.parse(rs.headers['last-modified']);
+                                    }
+                                    if(rs.headers['content-length']){
+                                        rs.headers['content-length'] = +rs.headers['content-length'];
+                                    }
                                     resolve({
-                                        isLocal: false,
+                                        type: 0x2, // binary: 10
                                         statusCode: rs.statusCode,
                                         headers: rs.headers,
                                         chunk  : Buffer.concat(bufs)
@@ -208,28 +228,82 @@ module.exports = (function(http, util, merge, Promise, colors,
                 });
 
                 Promise.all(promises).done(function(hbufs){
+                    /**
+                     * hbuf.type 的二进制个位表示是否匹配，十位表示是否用网络获取的数据
+                     **/
 
-                    var index = -1;
+                    var errorIndex = -1;
                     hbufs.forEach(function(hbuf, i){
+                        if(errorIndex >= 0){
+                            return;
+                        }
                         if(hbuf.statusCode >= 400){
-                            index = i;
+                            errorIndex = i;
                         }
                     });
 
-                    if(index >= 0){
-                        resWrap.writeHead(hbufs[index].statusCode, hbufs[index].headers);
-                        resWrap.write(hbufs[index].chunk);
+                    if(errorIndex >= 0){
+                        // 存在错误时，直接返回那条错误页
+                        resWrap.writeHead(hbufs[errorIndex].statusCode, hbufs[errorIndex].headers);
+                        resWrap.write(hbufs[errorIndex].chunk);
                         resWrap.end();
 
                     }else {
 
-                        // TODO calculate headers
-                        // 网络请求中的头部信息优先，其次是本地代理计算的头部信息
-                        // 不论从时序、顺序，都是后者优先
+                        // 没有错误时，计算出头部信息，状态码至200，返回全部数据
+                        var ohbuf = {
+                            type: 0x0, // 00
+                            statusCode: 200,
+                            headers: {
+                                'content-length': 0,
+                                'last-modified': undefined,
+                                'content-type': '',
+                                'server': '',
+                                'access-control-allow-origin': '*'
+                            }
+                        };
+                        /**
+                         * 头部信息计算概述：
+                         * 内容长度累加
+                         * 新者优先于老者
+                         * 远端优先于本地
+                         * 后者优先于前者
+                         **/
+                        hbufs.forEach(function(hbuf){
+                            if(typeof ohbuf.headers['content-length'] !== 'undefined'){
+                                if(typeof hbuf.headers['content-length'] !== 'undefined'){
+                                    ohbuf.headers['content-length'] = ohbuf.headers['content-length'] +  hbuf.headers['content-length'];
+                                }else {
+                                    delete ohbuf.headers['content-length'];
+                                }
+                            }
+
+                            if(typeof hbuf.headers['last-modified'] !== 'undefined'){
+                                if(typeof ohbuf.headers['last-modified'] === 'undefined'){
+                                    ohbuf.headers['last-modified'] = hbuf.headers['last-modified'];
+                                }else if(ohbuf.headers['last-modified'] < hbuf.headers['last-modified']){
+                                    ohbuf.headers['last-modified'] = hbuf.headers['last-modified'];
+                                }
+                            }
+
+                            if((hbuf.type & 0x2) >> 1 || !((ohbuf.type & 0x2) >> 1)){
+                                ohbuf.type = hbuf.type;
+                                if(typeof hbuf.headers['content-type'] !== 'undefined'){
+                                    ohbuf.headers['content-type'] = hbuf.headers['content-type'];
+                                }
+                                if(typeof hbuf.headers['server'] !== 'undefined'){
+                                    ohbuf.headers['server'] = hbuf.headers['server'];
+                                }
+                                if(typeof hbuf.headers['access-control-allow-origin'] !== 'undefined'){
+                                    ohbuf.headers['access-control-allow-origin'] = hbuf.headers['access-control-allow-origin'];
+                                }
+                            }
+                        });
+
+                        resWrap.writeHead(ohbuf.statusCode, ohbuf.headers);
                         hbufs.forEach(function(hbuf){
                             resWrap.write(hbuf.chunk);
                         });
-
                         resWrap.end();
                     }
 
@@ -238,7 +312,7 @@ module.exports = (function(http, util, merge, Promise, colors,
                 });
             }else {
                 // 直接将当前请求转发到远端并返回
-                nw.get(reqPars.toString(), options.request).then(function(rs){
+                nw.get(reqPars.toString(), options.request).done(function(rs){
                     resWrap.writeHead(rs.statusCode, rs.headers);
 
                     rs.on('data', function(chunk){
@@ -256,6 +330,6 @@ module.exports = (function(http, util, merge, Promise, colors,
 
         };
     };
-}(require('http'), require('util'), require('merge'), require('promise'), require('colors'),
+}(require('http'), require('util'), require('merge'), require('promise'), require('colors'), require('mime'),
   require('./nw'), require('./fs'), require('./request'), require('./request.fopts'), 
   require('./response'), require('./response.fopts'), require('./try2do')));
