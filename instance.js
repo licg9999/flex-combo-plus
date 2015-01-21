@@ -30,7 +30,7 @@
 }
 **/
 
-module.exports = (function(http, util, merge, Promise, colors, mime,
+module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                            nw, fs, request, requestFopts, 
                            response, responseFopts, try2do){
     
@@ -300,6 +300,16 @@ module.exports = (function(http, util, merge, Promise, colors, mime,
                             }
                         });
 
+                        if(typeof ohbuf.headers['content-length'] !== 'undefined'){
+                            ohbuf.headers['content-length'] = +ohbuf.headers['content-length']; 
+                        }
+
+                        if(typeof ohbuf.headers['last-modified'] !== 'undefined'){
+                            var date = new Date();
+                            date.setTime(ohbuf.headers['last-modified']);
+                            ohbuf.headers['last-modified'] = date.toUTCFormat('DDD, DD MMM YYYY HH24:MI:SS ') + 'GMT';
+                        }
+
                         resWrap.writeHead(ohbuf.statusCode, ohbuf.headers);
                         hbufs.forEach(function(hbuf){
                             resWrap.write(hbuf.chunk);
@@ -330,6 +340,6 @@ module.exports = (function(http, util, merge, Promise, colors, mime,
 
         };
     };
-}(require('http'), require('util'), require('merge'), require('promise'), require('colors'), require('mime'),
+}(require('http'), require('util'), require('merge'), require('promise'), require('colors'), require('date-utils'), require('mime'),
   require('./nw'), require('./fs'), require('./request'), require('./request.fopts'), 
   require('./response'), require('./response.fopts'), require('./try2do')));
