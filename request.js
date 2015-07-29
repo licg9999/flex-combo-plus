@@ -1,7 +1,7 @@
 /**
 #convention
 :UrlParts
-.protocal : string <! 'http'
+.protocol : string <! 'http'
 .hostname : string
 .port     : number << 80
 .dirname  : string
@@ -28,7 +28,7 @@ module.exports = (function(querystring, formatOptions){
             
             var hostPars = request.headers.host.split(options.host.seq),
                 urlPath = request.url;
-            
+
             var lenC = options.combo.start.length,
                 posC = urlPath.indexOf(options.combo.start),
                 hasC = posC >= 0;
@@ -65,10 +65,10 @@ module.exports = (function(querystring, formatOptions){
                     }
                 };
                 return Out;
-            }());
+            }())();
             
-            (function protocal(o){
-                o.protocal = options.protocal;
+            (function protocol(o){
+                o.protocol = options.protocol;
             }(out));
             
             (function hostname(o){
@@ -149,15 +149,14 @@ module.exports = (function(querystring, formatOptions){
             (function methods(o){
                 
                 o.toString = function(filenameIndexes){
-                    var url = o.protocal + '://';
+                    var url = o.protocol + '://';
                     
-                    var hostname = options.remote[o.hostname];
-                    if(!hostname){
-                        hostname = o.hostname;
+                    var host = options.remote[o.hostname];
+                    if(!host){
+                        host = o.hostname + options.host.seq + o.port;
                     }
-                    url += hostname;
-                    
-                    url += (o.port === 80? '': (options.host.seq + o.port)) + o.dirname;
+
+                    url += host + o.dirname;
                     
                     var filenames;
                     if(filenameIndexes){

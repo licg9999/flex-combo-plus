@@ -1,0 +1,8 @@
+{
+    "undef": true,
+    "sub": true,
+    "node": true,
+    "shadow": true,
+    "globals": {
+    }
+}

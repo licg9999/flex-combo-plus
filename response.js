@@ -30,11 +30,6 @@ module.exports = (function(merge){
         write: function(chunk){
             var _self = this;
             _self._value.write(chunk);
-        },
-        
-        end: function(){
-            var _self = this;
-            _self._value.end();
         }
     };
     

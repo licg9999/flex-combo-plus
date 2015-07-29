@@ -40,10 +40,12 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
             
             /** options **/
             options = merge.recursive({
-                after  : function(req, res){ },
+                after  : function(req, res){
+                    res.end();
+                },
                 error  : function(req, res){
-                    res.writeHead(500, {'Content-Type': 'text/html'});
-                    res.end('<h1 style="color: #900">Error 500</h1>');
+                    res.writeHead(500, {'Content-Type': 'application/json'});
+                    res.write('{"message":"Config Error, look up the console for more infomation."}');
                 }
             }, options);
             
@@ -74,15 +76,14 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
         return function(req, res){
             var reqPars = request.parse(req, options.request),
                 resWrap = response.wrap(res);
+
+            function nex(){
+                try2do(options.after.bind(options, req, res));
+            }
             
             function err(){
                 try2do(options.error.bind(options, req, res));
-                resWrap.end();
-            }
-            
-            function nex(){
-                try2do(options.after.bind(options, req, res), 
-                       options.error.bind(options, req, res));
+                nex();
             }
 
 
@@ -246,7 +247,7 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                         // 存在错误时，直接返回那条错误页
                         resWrap.writeHead(hbufs[errorIndex].statusCode, hbufs[errorIndex].headers);
                         resWrap.write(hbufs[errorIndex].chunk);
-                        resWrap.end();
+                        nex();
 
                     }else {
 
@@ -314,7 +315,7 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                         hbufs.forEach(function(hbuf){
                             resWrap.write(hbuf.chunk);
                         });
-                        resWrap.end();
+                        nex();
                     }
 
                 }, function(es){
@@ -330,7 +331,7 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                     });
 
                     rs.on('end', function(){
-                        resWrap.end();
+                        nex();
                     });
 
                 }, function(e){

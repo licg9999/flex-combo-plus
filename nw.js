@@ -22,7 +22,11 @@ module.exports = (function(http, url, Promise, colors, log){
         return new Promise(function(resolve, reject){
 
             var urlPars = url.parse(urlStr),
+                hostname = options.remote.reversed[urlPars.host];
+
+            if(!hostname && urlPars.port === 80){
                 hostname = options.remote.reversed[urlPars.hostname];
+            }
 
             if(hostname){
                 urlPars.headers = { host: hostname };

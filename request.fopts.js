@@ -3,7 +3,7 @@
     options: Object
            .remote: Object 
                   .reversed: Object
-           .protocal: string <! 'http'
+           .protocol: string <! 'http'
            .host : Object
                  .seq  : string <! ':'
            .combo: Object
@@ -29,7 +29,9 @@ module.exports = (function(assert, merge){
         /** configurable **/
         options = merge.recursive({
             remote:{ 
-                'g.tbcdn.cn'               : '115.238.23.240',
+                'g.alicdn.com'             : '110.75.114.8',
+                'g-assets.daily.taobao.net': '10.101.73.189',
+                'g.tbcdn.cn'               : '140.205.132.240',
                 'g.assets.daily.taobao.net': '10.101.73.189'
             },
             combo: {
@@ -45,7 +47,7 @@ module.exports = (function(assert, merge){
 
         /** unconfigurable **/
         merge.recursive(options, {
-            protocal: 'http',
+            protocol: 'http',
             host    : {
                 seq: ':'
             },
@@ -59,7 +61,12 @@ module.exports = (function(assert, merge){
         for(k in options.remote){
             v = options.remote[k];
             /** assertions start **/
-            assert.notEqual(v, '127.0.0.1', 'Misconfigured Remote(' + k + '  ' + v +')');
+            /**
+             * if(listenPort === 80){
+             *     assert.notEqual(v, '127.0.0.1', 'Misconfigured Remote(' + k + '  ' + v +')');
+             * }
+             * assert.notEqual(v, '127.0.0.1:' + listenPort, 'Misconfigured Remote(' + k + '  ' + v +')');
+             */
             /** assertions -end- **/
             if(v !== options.remote.reversed){
                 options.remote.reversed[v] = k;
