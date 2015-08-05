@@ -5,14 +5,20 @@
     http.createServer(instance([
         {
             name: 'test1',
-            from: '/group/project/subpath/(\\d+\\.){2}\\d+/', 
+            from: '/kissy/k/d/(\\d+\\.){2}\\d+/', 
             to  : '/Users/uno/Temp/d/',
             disabled: false
         },
         {
             name: 'test2',
-            from: '/group/project/(\\d+\\.){2}\\d+/', 
+            from: '/kissy/k/(\\d+\\.){2}\\d+/', 
             to  : '/Users/uno/Temp/',
+            disabled: false
+        },
+        {
+            name: 'test3',
+            from: '/Programs/css/',
+            to  : '/Users/uno/Programs/css/',
             disabled: false
         }
     ], {
@@ -21,7 +27,7 @@
              * 允许设置到本地的反向代理，但由用户自己注意保证监听端口与目标端口不同
              */
             remote: {
-                'localhost': '127.0.0.1:8080'
+                'localhost': '127.0.0.1:8088'
             }
         },
         after: function(req, res){

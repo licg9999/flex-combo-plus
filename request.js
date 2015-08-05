@@ -130,6 +130,11 @@ module.exports = (function(querystring, formatOptions){
                     }
                 }
                 
+                filenames.forEach(function(filename, i){
+                    if(filename.indexOf(options.combo.dir) === 0){
+                        filenames[i] = filename.substring(1, filename.length);
+                    }
+                });
 
                 o.filenames = filenames;
             }(out));
