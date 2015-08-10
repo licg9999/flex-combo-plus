@@ -4,12 +4,11 @@
   "description": "process engine for aproxy",
   "main": "instance.js",
   "engines": {
-    "node": "^0.10.0"
+    "node": "^0.11.0"
   },
   "dependencies": {
     "colors": "~1.0.3",
     "date-utils": "~1.2.16",
-    "gitlab": "~1.1.0",
     "merge": "~1.2.0",
     "mime": "~1.2.11",
     "promise": "~6.0.1"
