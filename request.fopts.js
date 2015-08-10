@@ -28,10 +28,10 @@ module.exports = (function(assert, merge){
         /** configurable **/
         options = merge.recursive({
             remote:{ 
-                /*'g.alicdn.com'             : '110.75.114.8',
+                'g.alicdn.com'             : '110.75.114.8',
                 'g-assets.daily.taobao.net': '10.101.73.189',
                 'g.tbcdn.cn'               : '140.205.132.240',
-                'g.assets.daily.taobao.net': '10.101.73.189'*/
+                'g.assets.daily.taobao.net': '10.101.73.189'
             },
             combo: {
                 start: '??',
