@@ -32,7 +32,7 @@
         },
         after: function(req, res){
             res.end();
-            console.log('request number: ' + i++);
+            console.log('request number: ' + i++, '\n');
         }
     })).listen(80);
     

@@ -44,8 +44,8 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                     res.end();
                 },
                 error  : function(req, res){
-                    res.writeHead(500, {'Content-Type': 'application/json'});
-                    res.write('{"message":"Config Error, look up the console for more infomation."}');
+                    res.writeHead(406, {'Content-Type': 'application/json'});
+                    res.write('{"message":"NotAcceptable, check the console for more infomation."}');
                 }
             }, options);
             
@@ -173,7 +173,7 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
 
                                 }else {
                                     var bufs = [];
-                                    nw.get(reqPars.toString([filenameIndex]), options.request).done(function(rs){
+                                    nw.get(reqPars.toUrlPars([filenameIndex]), options.request).done(function(rs){
 
                                         rs.on('data', function(chunk){
                                             bufs.push(chunk);
@@ -202,7 +202,7 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                         promises.push(new Promise(function(resolve, reject){
 
                             var bufs = [];
-                            nw.get(reqPars.toString([filenameIndex]), options.request).done(function(rs){
+                            nw.get(reqPars.toUrlPars([filenameIndex]), options.request).done(function(rs){
 
                                 rs.on('data', function(chunk){
                                     bufs.push(chunk);
@@ -323,7 +323,7 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                 });
             }else {
                 // 直接将当前请求转发到远端并返回
-                nw.get(reqPars.toString(), options.request).done(function(rs){
+                nw.get(reqPars.toUrlPars(), options.request).done(function(rs){
                     resWrap.writeHead(rs.statusCode, rs.headers);
 
                     rs.on('data', function(chunk){

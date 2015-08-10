@@ -1,87 +1,93 @@
 /**
 @exports: Object
-        .get: function(urlStr, options){
-            urlStr : string
+        .get: function(urlPars, options){
+            urlStr : URL
             options >> ./request.fopts >> @exports >> options
             @return: Promise
         }
-        .head: function(urlStr, options){
-            urlStr : string
+        .head: function(urlPars, options){
+            urlStr : URL
             options >> ./request.fopts >> @exports >> options
             @return: Promise
         }
 **/
-module.exports = (function(http, url, Promise, colors, log){
+module.exports = (function(http, url, dns, Promise, colors, log){
 
-    function request(urlStr, options, actions){
+    function request(urlPars, options, actions){
         var actions = actions || {},
             before  = actions.before || function(){},
             after   = actions.after  || function(){},
             error   = actions.error  || function(){};
 
         return new Promise(function(resolve, reject){
+            function next(){
+                before({});
 
-            var urlPars = url.parse(urlStr),
-                hostname = options.remote.reversed[urlPars.host];
+                http.get(urlPars, function(res){
+                    after();
+                    resolve(res);
 
-            if(!hostname && urlPars.port === 80){
-                hostname = options.remote.reversed[urlPars.hostname];
+                }).on('error', function(e){
+
+                    error(e);
+                    reject(e);
+                });
             }
 
-            if(hostname){
-                urlPars.headers = { host: hostname };
-            }else{
-                // 因为请求已经通过绑定转发到本地，但是配置项中没有任何对该主机的描述，
-                // 如果放任不管继续下行，将循环请求，所以这里要阻断
+            function error(){
                 log('\n' + 
-                    ('Unconfigured Remote(' + urlPars.hostname + ')').red +
-                    (': [' + urlStr + ']').grey + 
+                    ('Unconfigured Remote(' + urlPars.headers.host + ')').red +
+                    (': [' + url.format(urlPars) + ']').grey + 
                     '\n');
                 reject(null);
-                return;
             }
 
-            before({
-                urlPars: urlPars
-            });
+            if(urlPars.headers.host.match(/(\d{1,3}\.){3}\d{1,3}/)){
+                if(urlPars.headers.host !== '127.0.0.1'){
+                    next();
+                }else {
+                    error();
+                }
+            }else {
+                if(options.remote[urlPars.headers.host]){
+                    next();
+                }else {
+                    dns.lookup(urlPars.headers.host, function(err, addr){
+                        if(!err && addr !== '127.0.0.1'){
+                            next();
+                        }else {
+                            error();
+                        }
+                    });
+                }
+            }
 
-            http.get(urlPars, function(res){
-
-                after({
-                    hostname: hostname
-                });
-                resolve(res);
-
-            }).on('error', function(e){
-                error(e);
-                reject(e);
-            });
         });
     }
     
     return {
-        get: function(urlStr, options){
+        get: function(urlPars, options){
 
-            return request(urlStr, options, {
-                before: function(o){
-                    o.urlPars.method = 'GET';
+            return request(urlPars, options, {
+                before: function(){
+                    urlPars.method = 'GET';
                 },
 
-                after: function(o){
-                    log(('Dispatched to Remote(' + o.hostname + ')').magenta +
-                        (': [' + urlStr + ']').grey);
+                after: function(){
+                    log(('Dispatched to Remote(' + urlPars.headers.host + ')').magenta +
+                        (': [' + url.format(urlPars) + ']').grey);
                 }
             });
         },
 
-        head: function(urlStr, options){
+        head: function(urlPars, options){
 
-            return request(urlStr, options, {
+            return request(urlPars, options, {
 
-                before: function(o){
-                    o.urlPars.method = 'GET';
+                before: function(){
+                    urlPars.method = 'HEAD';
                 }
             });
         }
     };
-}(require('http'), require('url'), require('promise'), require('colors'), require('./log')));
+}(require('http'), require('url'), require('dns'), require('promise'), require('colors'), require('./log')));

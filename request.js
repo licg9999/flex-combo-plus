@@ -1,15 +1,27 @@
 /**
 #convention
-:UrlParts
+:ReqPars
 .protocol : string <! 'http'
 .hostname : string
 .port     : number << 80
 .dirname  : string
 .filenames: Array<string>
 .query    : Object
-.toString : function(filenames){
-    filenames: Array<string>
-    @return  : string
+.resolveFilename: function(i){
+    i: number
+    @return: string
+}
+.resolveDirname : function(i){
+    i: number
+    @return: string
+}
+.toString : function(filenameIndexes){
+    filenameIndexes: Array<number>
+    @return: string
+}
+.toUrlPars: function(filenameIndexes){
+    filenameIndexes: Array<number>
+    @return: URL
 }
 /convention
 
@@ -17,16 +29,16 @@
         .parse: function(request, options){
             request: http.IncomingMessage, 
             options >> request.fopts >> @exports >> options
-            @return: UrlParts
+            @return: ReqPars
         }
 **/
 
-module.exports = (function(querystring, formatOptions){
+module.exports = (function(querystring, url, formatOptions){
     
     return {
         parse: function(request, options){
             
-            var hostPars = request.headers.host.split(options.host.seq),
+            var hostPars = (request.headers.ahost || request.headers.host).split(options.host.seq),
                 urlPath = request.url;
 
             var lenC = options.combo.start.length,
@@ -48,20 +60,67 @@ module.exports = (function(querystring, formatOptions){
 
 
             var out = new (function(){
-                function Out(){}
-                Out.prototype = {
+                function Out(){} Out.prototype = {
                     resolveDirname: function(i){
                         var _self = this;
                         var resolvedDirname = _self.dirname + _self.filenames[i];
                         resolvedDirname = resolvedDirname.substring(0, resolvedDirname.lastIndexOf(options.combo.dir) + 1);
                         return resolvedDirname;
                     },
+
                     resolveFilename: function(i){
                         var _self = this;
                         var resolvedFilename = _self.filenames[i];
                         resolvedFilename = resolvedFilename.substring(resolvedFilename.lastIndexOf(options.combo.dir) + 1, 
                             resolvedFilename.length);
                         return resolvedFilename;
+                    },
+
+                    toString: function(filenameIndexes){
+                        var _self = this;
+                        var url = _self.protocol + '://';
+                        
+                        var host = options.remote[_self.hostname];
+                        if(!host){
+                            host = _self.hostname + (_self.port === 80? '': options.host.seq + _self.port);
+                        }
+
+                        url += host + _self.dirname;
+                        
+                        var filenames;
+                        if(filenameIndexes){
+                            filenames = [];
+                            filenameIndexes.forEach(function(filenameIndex){
+                                filenames.push(_self.filenames[filenameIndex]);
+                            });
+                        }else {
+                            filenames = _self.filenames;
+                        }
+                        
+                        if(filenames.length === 1){
+                            
+                            url += filenames[0];
+                            
+                        }else if(filenames.length > 1){
+                            
+                            url += options.combo.start;
+                            
+                            filenames.forEach(function(filename, i){
+                                url += filename + (i < filenames.length - 1? options.combo.seq: '');
+                            });
+                        }
+                        
+                        var query = querystring.stringify(_self.query, options.query.seq, options.query.ass);
+                        url += query? (options.query.start + query): '';
+                        
+                        return url;
+                    },
+
+                    toUrlPars: function(filenameIndexes){
+                        var _self = this;
+                        var urlPars = url.parse(this.toString(filenameIndexes));
+                        urlPars.headers = { host: _self.hostname };
+                        return urlPars;
                     }
                 };
                 return Out;
@@ -79,7 +138,6 @@ module.exports = (function(querystring, formatOptions){
                 o.port = hostPars[1]? +hostPars[1]: 80;
             }(out));
 
-            
             (function dirname(o){
                 if(hasC){
 
@@ -150,51 +208,9 @@ module.exports = (function(querystring, formatOptions){
                     o.query = {};
                 }
             }(out));
-            
-            (function methods(o){
-                
-                o.toString = function(filenameIndexes){
-                    var url = o.protocol + '://';
-                    
-                    var host = options.remote[o.hostname];
-                    if(!host){
-                        host = o.hostname + options.host.seq + o.port;
-                    }
-
-                    url += host + o.dirname;
-                    
-                    var filenames;
-                    if(filenameIndexes){
-                        filenames = [];
-                        filenameIndexes.forEach(function(filenameIndex){
-                            filenames.push(o.filenames[filenameIndex]);
-                        });
-                    }else {
-                        filenames = o.filenames;
-                    }
-                    
-                    if(filenames.length === 1){
-                        
-                        url += filenames[0];
-                        
-                    }else if(filenames.length > 1){
-                        
-                        url += options.combo.start;
-                        
-                        filenames.forEach(function(filename, i){
-                            url += filename + (i < filenames.length - 1? options.combo.seq: '');
-                        });
-                    }
-                    
-                    var query = querystring.stringify(o.query, options.query.seq, options.query.ass);
-                    url += query? (options.query.start + query): '';
-                    
-                    return url;
-                };
-            }(out));
 
             return out;
         }
     };
     
-}(require('querystring'), require('./request.fopts')));
+}(require('querystring'), require('url'), require('./request.fopts')));
