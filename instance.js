@@ -31,7 +31,7 @@
 **/
 
 module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
-                           nw, fs, request, requestFopts, 
+                           log, nw, fs, request, requestFopts, 
                            response, responseFopts, try2do){
     
     return function(rules, options){
@@ -318,7 +318,8 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                         nex();
                     }
 
-                }, function(es){
+                }, function(errstr){
+                    log(errstr);
                     err();
                 });
             }else {
@@ -334,7 +335,8 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                         nex();
                     });
 
-                }, function(e){
+                }, function(errstr){
+                    log(errstr);
                     err();
                 });
             }
@@ -342,5 +344,5 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
         };
     };
 }(require('http'), require('util'), require('merge'), require('promise'), require('colors'), require('date-utils'), require('mime'),
-  require('./nw'), require('./fs'), require('./request'), require('./request.fopts'), 
+  require('./log'), require('./nw'), require('./fs'), require('./request'), require('./request.fopts'), 
   require('./response'), require('./response.fopts'), require('./try2do')));

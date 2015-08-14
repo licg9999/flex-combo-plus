@@ -30,24 +30,16 @@ module.exports = (function(http, url, dns, Promise, colors, log){
                 }).on('error', function(e){
 
                     error(e);
-                    reject(e);
+                    reject(('Unreachable Remote(' + urlPars.headers.host + ')').red +
+                           (': [' + url.format(urlPars) + ']').grey);
                 });
             }
 
-            function error(){
-                log('\n' + 
-                    ('Unconfigured Remote(' + urlPars.headers.host + ')').red +
-                    (': [' + url.format(urlPars) + ']').grey + 
-                    '\n');
-                reject(null);
-            }
-
             if(urlPars.headers.host.match(/(\d{1,3}\.){3}\d{1,3}/)){
-                if(urlPars.headers.host !== '127.0.0.1'){
-                    next();
-                }else {
-                    error();
-                }
+                log('Bad request'.red +
+                   (': [' + url.format(urlPars) + ']').grey); 
+                error();
+                reject(null);
             }else {
                 if(options.remote[urlPars.headers.host]){
                     next();
@@ -56,7 +48,12 @@ module.exports = (function(http, url, dns, Promise, colors, log){
                         if(!err && addr !== '127.0.0.1'){
                             next();
                         }else {
+                            log('\n' + 
+                                ('Unconfigured Remote(' + urlPars.headers.host + ')').red +
+                                (': [' + url.format(urlPars) + ']').grey + 
+                                '\n');
                             error();
+                            reject(null);
                         }
                     });
                 }
