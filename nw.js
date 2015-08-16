@@ -36,10 +36,9 @@ module.exports = (function(http, url, dns, Promise, colors, log){
             }
 
             if(urlPars.headers.host.match(/(\d{1,3}\.){3}\d{1,3}/)){
-                log('Bad request'.red +
-                   (': [' + url.format(urlPars) + ']').grey); 
-                error();
-                reject(null);
+                error(null);
+                reject('Bad request'.red +
+                      (': [' + url.format(urlPars) + ']').grey);
             }else {
                 if(options.remote[urlPars.headers.host]){
                     next();
@@ -48,12 +47,9 @@ module.exports = (function(http, url, dns, Promise, colors, log){
                         if(!err && addr !== '127.0.0.1'){
                             next();
                         }else {
-                            log('\n' + 
-                                ('Unconfigured Remote(' + urlPars.headers.host + ')').red +
-                                (': [' + url.format(urlPars) + ']').grey + 
-                                '\n');
-                            error();
-                            reject(null);
+                            error(null);
+                            reject(('Unconfigured Remote(' + urlPars.headers.host + ')').red +
+                                   (': [' + url.format(urlPars) + ']').grey);
                         }
                     });
                 }

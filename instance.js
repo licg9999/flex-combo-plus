@@ -81,7 +81,8 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                 try2do(options.after.bind(options, req, res));
             }
             
-            function err(){
+            function err(e){
+                log(e);
                 try2do(options.error.bind(options, req, res));
                 nex();
             }
@@ -318,9 +319,8 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                         nex();
                     }
 
-                }, function(errstr){
-                    log(errstr);
-                    err();
+                }, function(e){
+                    err(e);
                 });
             }else {
                 // 直接将当前请求转发到远端并返回
@@ -335,9 +335,8 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                         nex();
                     });
 
-                }, function(errstr){
-                    log(errstr);
-                    err();
+                }, function(e){
+                    err(e);
                 });
             }
 
