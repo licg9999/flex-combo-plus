@@ -17,7 +17,7 @@
             @return: Promise
         }
 **/
-module.exports = (function(Gitlab, Promise, log){
+module.exports = (function(Gitlab, log){
     var cache = {};
     function instance(config){
         var key = config.url + config.token;
@@ -47,4 +47,4 @@ module.exports = (function(Gitlab, Promise, log){
             });
         }
     };
-}(require('gitlab'), require('promise'), require('./log')));
+}(require('gitlab'), require('./log')));

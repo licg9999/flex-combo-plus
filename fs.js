@@ -5,7 +5,7 @@
             @return: Promise
         }
 **/
-module.exports = (function(fs, Promise, log){
+module.exports = (function(fs, log){
     
     return {
         exists: function(path){
@@ -40,6 +40,11 @@ module.exports = (function(fs, Promise, log){
                     }
                 });
             });
+        },
+
+        browserifyFile: function(path){
+            return new Promise(function(resolve, reject){
+            });
         }
     };
-}(require('fs'), require('promise'), require('./log')));
+}(require('fs'), require('./log')));

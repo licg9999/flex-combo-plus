@@ -11,11 +11,11 @@
             @return: Promise
         }
 **/
-module.exports = (function(http, url, dns, Promise, colors, log){
+module.exports = (function(http, url, dns, colors, log){
 
     function request(urlPars, options, actions){
-        var actions = actions || {},
-            before  = actions.before || function(){},
+        actions = actions || {};
+        var before  = actions.before || function(){},
             after   = actions.after  || function(){},
             error   = actions.error  || function(){};
 
@@ -83,4 +83,4 @@ module.exports = (function(http, url, dns, Promise, colors, log){
             });
         }
     };
-}(require('http'), require('url'), require('dns'), require('promise'), require('colors'), require('./log')));
+}(require('http'), require('url'), require('dns'), require('colors'), require('./log')));
