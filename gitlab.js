@@ -30,21 +30,21 @@ module.exports = (function(Gitlab, log){
     
     return {
         file: function(params, config){
-            return new Promise(function(resolve, reject){
-                instance(config).projects.repository.showFile({
-                    projectId: params.project,
-                    ref      : params.branch,
-                    file_path: params.filepath
-                }, function(data){
-                    if(data){
-                        log(('Dispatched to gitlab(' + config.url + ')').magenta +
-                            (': ' + JSON.stringify(params)).grey);
-                        resolve(new Buffer(data.content, data.encoding));
-                    }else {
-                        reject();
-                    }
-                });
+            var deferred = Promise.defer();
+            instance(config).projects.repository.showFile({
+                projectId: params.project,
+                ref      : params.branch,
+                file_path: params.filepath
+            }, function(data){
+                if(data){
+                    log(('Dispatched to gitlab(' + config.url + ')').magenta +
+                        (': ' + JSON.stringify(params)).grey);
+                    deferred.resolve(new Buffer(data.content, data.encoding));
+                }else {
+                    deferred.reject();
+                }
             });
+            return deferred.promise;
         }
     };
 }(require('gitlab'), require('./log')));

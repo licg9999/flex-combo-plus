@@ -19,43 +19,44 @@ module.exports = (function(http, url, dns, colors, log){
             after   = actions.after  || function(){},
             error   = actions.error  || function(){};
 
-        return new Promise(function(resolve, reject){
-            function next(){
-                before({});
+        var deferred = Promise.defer();
 
-                http.get(urlPars, function(res){
-                    after();
-                    resolve(res);
+        function next(){
+            before({});
 
-                }).on('error', function(e){
+            http.get(urlPars, function(res){
+                after();
+                deferred.resolve(res);
 
-                    error(e);
-                    reject(('Unreachable Remote(' + urlPars.headers.host + ')').red +
-                           (': [' + url.format(urlPars) + ']').grey);
+            }).on('error', function(e){
+
+                error(e);
+                deferred.reject(('Unreachable Remote(' + urlPars.headers.host + ')').red +
+                       (': [' + url.format(urlPars) + ']').grey);
+            });
+        }
+
+        if(urlPars.headers.host.match(/(\d{1,3}\.){3}\d{1,3}/)){
+            error(null);
+            deferred.reject('Bad request'.red +
+                  (': [' + url.format(urlPars) + ']').grey);
+        }else {
+            if(options.remote[urlPars.headers.host]){
+                next();
+            }else {
+                dns.lookup(urlPars.headers.host, function(err, addr){
+                    if(!err && addr !== '127.0.0.1'){
+                        next();
+                    }else {
+                        error(null);
+                        deferred.reject(('Unconfigured Remote(' + urlPars.headers.host + ')').red +
+                               (': [' + url.format(urlPars) + ']').grey);
+                    }
                 });
             }
+        }
 
-            if(urlPars.headers.host.match(/(\d{1,3}\.){3}\d{1,3}/)){
-                error(null);
-                reject('Bad request'.red +
-                      (': [' + url.format(urlPars) + ']').grey);
-            }else {
-                if(options.remote[urlPars.headers.host]){
-                    next();
-                }else {
-                    dns.lookup(urlPars.headers.host, function(err, addr){
-                        if(!err && addr !== '127.0.0.1'){
-                            next();
-                        }else {
-                            error(null);
-                            reject(('Unconfigured Remote(' + urlPars.headers.host + ')').red +
-                                   (': [' + url.format(urlPars) + ']').grey);
-                        }
-                    });
-                }
-            }
-
-        });
+        return deferred.promise;
     }
     
     return {

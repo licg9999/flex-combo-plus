@@ -32,6 +32,7 @@ module.exports = (function(assert, merge){
                 'g-assets.daily.taobao.net': '10.101.73.189',
                 'g.tbcdn.cn'               : '140.205.132.240',
                 'g.assets.daily.taobao.net': '10.101.73.189'
+                // TODO extend
             },
             combo: {
                 start: '??',
