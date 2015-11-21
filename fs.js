@@ -5,7 +5,7 @@
             @return: Promise
         }
 **/
-module.exports = (function(fs, log){
+module.exports = (function(fs, findup, log){
     
     return {
         exists: function(path){
@@ -40,11 +40,6 @@ module.exports = (function(fs, log){
                 }
             });
             return deferred.promise;
-        },
-
-        browserifyFile: function(path){
-            var deferred = Promise.defer();
-            return deferred.promise;
         }
     };
-}(require('fs'), require('./log')));
+}(require('fs'), require('findup-sync'), require('./log')));

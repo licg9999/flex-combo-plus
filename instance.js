@@ -30,7 +30,7 @@
 }
 **/
 
-module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
+module.exports = (function(http, util, merge, colors, DateUtils, mime,
                            log, nw, fs, request, requestFopts, 
                            response, responseFopts, try2do){
     
@@ -150,13 +150,13 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                     if(toPath){
 
                         promises.push(new Promise(function(resolve, reject){
-                            fs.exists(toPath).done(function(isLocal){
+                            fs.exists(toPath).then(function(isLocal){
 
                                 if(isLocal){
 
-                                    fs.readFile(toPath).done(function(chunk){
+                                    fs.readFile(toPath).then(function(chunk){
 
-                                        fs.stat(toPath).done(function(stats){
+                                        fs.stat(toPath).then(function(stats){
                                             resolve({
                                                 type: 0x1, // binary: 01
                                                 statusCode: 200,
@@ -174,7 +174,7 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
 
                                 }else {
                                     var bufs = [];
-                                    nw.get(reqPars.toUrlPars([filenameIndex]), options.request).done(function(rs){
+                                    nw.get(reqPars.toUrlPars([filenameIndex]), options.request).then(function(rs){
 
                                         rs.on('data', function(chunk){
                                             bufs.push(chunk);
@@ -203,7 +203,7 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                         promises.push(new Promise(function(resolve, reject){
 
                             var bufs = [];
-                            nw.get(reqPars.toUrlPars([filenameIndex]), options.request).done(function(rs){
+                            nw.get(reqPars.toUrlPars([filenameIndex]), options.request).then(function(rs){
 
                                 rs.on('data', function(chunk){
                                     bufs.push(chunk);
@@ -229,7 +229,7 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                     }
                 });
 
-                Promise.all(promises).done(function(hbufs){
+                Promise.all(promises).then(function(hbufs){
                     /**
                      * hbuf.type 的二进制个位表示是否匹配，十位表示是否用网络获取的数据
                      **/
@@ -324,7 +324,7 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
                 });
             }else {
                 // 直接将当前请求转发到远端并返回
-                nw.get(reqPars.toUrlPars(), options.request).done(function(rs){
+                nw.get(reqPars.toUrlPars(), options.request).then(function(rs){
                     resWrap.writeHead(rs.statusCode, rs.headers);
 
                     rs.on('data', function(chunk){
@@ -342,6 +342,6 @@ module.exports = (function(http, util, merge, Promise, colors, DateUtils, mime,
 
         };
     };
-}(require('http'), require('util'), require('merge'), require('promise'), require('colors'), require('date-utils'), require('mime'),
+}(require('http'), require('util'), require('merge'), require('colors'), require('date-utils'), require('mime'),
   require('./log'), require('./nw'), require('./fs'), require('./request'), require('./request.fopts'), 
   require('./response'), require('./response.fopts'), require('./try2do')));

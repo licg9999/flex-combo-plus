@@ -33,13 +33,13 @@
         }
 **/
 
-module.exports = (function(querystring, url, formatOptions){
+module.exports = (function(querystring, url, path, formatOptions){
     
     return {
         parse: function(request, options){
             
             var hostPars = (request.headers.ahost || request.headers.host).split(options.host.seq),
-                urlPath = request.url;
+                urlPath = path.normalize(request.url);
 
             var lenC = options.combo.start.length,
                 posC = urlPath.indexOf(options.combo.start),
@@ -213,4 +213,4 @@ module.exports = (function(querystring, url, formatOptions){
         }
     };
     
-}(require('querystring'), require('url'), require('./request.fopts')));
+}(require('querystring'), require('url'), require('path'), require('./request.fopts')));
