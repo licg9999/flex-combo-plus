@@ -1,6 +1,9 @@
+gitlab.js
+
 node_modules/
+tests/
 .gitignore
 .npmignore
 .jshintrc
-gitlab.js
-test.js
+*.swp
+*.swo
