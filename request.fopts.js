@@ -30,9 +30,10 @@ module.exports = (function(assert, merge){
             remote:{ 
                 'g-assets.daily.taobao.net': '10.101.73.189',
                 'g.assets.daily.taobao.net': '10.101.73.189',
+                'assets.daily.taobao.net'  : '10.101.73.189',
                 'g.alicdn.com'             : '110.75.114.8',
-                'g.tbcdn.cn'               : '140.205.132.240'
-                // TODO extend
+                'g.tbcdn.cn'               : '140.205.132.240',
+                'assets.alicdn.com'        : '115.238.23.240'
             },
             combo: {
                 start: '??',

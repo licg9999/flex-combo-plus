@@ -82,7 +82,7 @@ module.exports = (function(http, util, merge, colors, DateUtils, mime,
             }
             
             function err(e){
-                log(e);
+                e && log(e);
                 try2do(options.error.bind(options, req, res));
                 nex();
             }
