@@ -16,8 +16,7 @@
     "find-up": "^1.1.0",
     "glob-all": "^3.0.1",
     "merge": "~1.2.0",
-    "mime": "~1.2.11",
-    "uglifyify": "^3.0.1"
+    "mime": "~1.2.11"
   },
   "devDependencies": {
     "async": "^1.5.0",

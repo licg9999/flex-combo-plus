@@ -229,5 +229,11 @@ describe('browserified', function(){
         itL('http://g.alicdn.com/kissy/b/1.4.14/d.js', ['proj1/build/d.js']);
         itL('http://g.alicdn.com/kissy/b/1.4.14/??a.js,b.js,c.js,d.js', ['proj1/build/a.js', 'proj1/build/b.js', 'proj1/build/c.js', 'proj1/build/d.js']);
         itL('http://g.alicdn.com/kissy/b/1.4.14/gulpfile.js', ['proj1/build/gulpfile.js']);
+
+        it('"http://g.alicdn.com/kissy/b/1.4.14/none.js" should not exists locally', function(done){
+            request('http://g.alicdn.com/kissy/b/1.4.14/none.js', function(err, res, ctt){
+                done();
+            });
+        });
     });
 });

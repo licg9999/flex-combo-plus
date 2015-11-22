@@ -25,7 +25,8 @@ module.exports = (function(fs, pathLib, findup, browserify, glob, log){
         
         readFile: function(path){
             var deferred = Promise.defer();
-            if(!REGEXP_JSFILE.test(path)){
+
+            function plainFunc(){
                 fs.readFile(path, {}, function(err, data){
                     if(err){
                         deferred.reject();
@@ -35,43 +36,31 @@ module.exports = (function(fs, pathLib, findup, browserify, glob, log){
                         deferred.resolve(data);
                     }
                 });
+            }
+
+            if(!REGEXP_JSFILE.test(path)){
+                plainFunc();
                 return deferred.promise;
             }
 
             var floorPath = pathLib.resolve(path, '../..');
             findup('gulpfile.js', { cwd: floorPath }).then(function(gfp){
                 if(!gfp){
-                    fs.readFile(path, {}, function(err, data){
-                        if(err){
-                            deferred.reject();
-                        }else{
-                            log(('Disapathed to Local').cyan +
-                                (': [' + path + ']').grey);
-                            deferred.resolve(data);
-                        }
-                    });
+                    plainFunc();
                     return;
                 }
 
                 fs.readFile(gfp, function(err, gfbuf){
                     var gfctt = gfbuf.toString();
                     if(!REGEXP_REQUIRE_BROWSERIFY.test(gfctt)){
-                        fs.readFile(path, {}, function(err, data){
-                            if(err){
-                                deferred.reject();
-                            }else{
-                                log(('Disapathed to Local').cyan +
-                                    (': [' + path + ']').grey);
-                                deferred.resolve(data);
-                            }
-                        });
+                        plainFunc();
                         return;
                     }
 
-                    var parentPath = pathLib.resolve(gfp, '..');
+                    var parentPath   = pathLib.resolve(gfp, '..');
                     var relativePath = pathLib.relative(parentPath, path);
-                    var srcDirname = relativePath.substring(0, relativePath.indexOf(pathLib.sep));
-                    var innerPath = relativePath.substring(relativePath.indexOf(pathLib.sep) + 1);
+                    var srcDirname   = relativePath.substring(0, relativePath.indexOf(pathLib.sep));
+                    var innerPath    = relativePath.substring(relativePath.indexOf(pathLib.sep) + 1);
 
                     if(REGEXP_HIDDEN_JSFILE.test(innerPath)){
                         deferred.reject();
@@ -92,8 +81,8 @@ module.exports = (function(fs, pathLib, findup, browserify, glob, log){
                         if(externDirname){
                             var externDirpath = pathLib.resolve(parentPath, srcDirname, externDirname);
                             externPattern.push(externDirpath + pathLib.sep + '**/*.js');
-                            externPattern.push('!' + externDirpath + pathLib.sep + '**/_*.js');
-                            externPattern.push('!' + externDirpath + pathLib.sep + '**/_*/**/*.js');
+                            externPattern.push('!' + externDirpath + pathLib.sep + '**/_*.js');         // 下划线开头的js文件
+                            externPattern.push('!' + externDirpath + pathLib.sep + '**/_*/**/*.js');    // 下划线开头的文件夹
                         }
 
                         glob(externPattern, function(err, externFiles){
@@ -106,11 +95,12 @@ module.exports = (function(fs, pathLib, findup, browserify, glob, log){
                             var b;
                             if(isExtern){
                                 b = browserify({ 
-                                    debug: true 
-                                }).require(path, {
-                                    expose: path.sep + relativePath
+                                    debug: true,
+                                    basedir: parentPath
+                                }).require('.' + pathLib.sep + relativePath, {
+                                    expose: pathLib.sep + relativePath 
                                 }).external(externFiles.filter(function(ef){
-                                    return ef !== relativePath;
+                                    return ef !== path;
                                 }).concat(browserifyExternal));
                             }else {
                                 b = browserify(relativePath, { 
