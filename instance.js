@@ -162,7 +162,7 @@ module.exports = (function(http, util, merge, colors, DateUtils, mime,
                                                 statusCode: 200,
                                                 headers: {
                                                     'content-type': mime.lookup(toPath),
-                                                    'content-length': stats.size,
+                                                    'content-length': chunk.length,
                                                     'last-modified': stats.mtime.getTime(),
                                                     'server': 'aproxy',
                                                     'access-control-allow-origin': '*'
@@ -257,6 +257,7 @@ module.exports = (function(http, util, merge, colors, DateUtils, mime,
                             type: 0x0, // 00
                             statusCode: 200,
                             headers: {
+                                'connection': 'keep-alive',
                                 'content-length': 0,
                                 'last-modified': undefined,
                                 'content-type': '',

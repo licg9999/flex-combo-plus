@@ -10,15 +10,19 @@
     "test": "mocha tests/index.js"
   },
   "dependencies": {
+    "browserify": "^12.0.1",
     "colors": "~1.0.3",
     "date-utils": "~1.2.16",
-    "findup-sync": "^0.3.0",
+    "find-up": "^1.1.0",
+    "glob-all": "^3.0.1",
     "merge": "~1.2.0",
-    "mime": "~1.2.11"
+    "mime": "~1.2.11",
+    "uglifyify": "^3.0.1"
   },
   "devDependencies": {
     "async": "^1.5.0",
     "chai": "^3.4.1",
+    "convert-source-map": "^1.1.2",
     "glob-all": "^3.0.1",
     "request": "^2.67.0"
   },
