@@ -148,33 +148,28 @@ module.exports = (function(http, util, merge, colors, DateUtils, mime,
                     }
 
                     if(toPath){
-
                         promises.push(new Promise(function(resolve, reject){
-                            fs.exists(toPath).then(function(isLocal){
+                            fs.readFile(toPath).then(function(chunk){
+                                fs.stat(toPath).then(function(stats){
+                                    resolve({
+                                        type: 0x1, // binary: 01
+                                        statusCode: 200,
+                                        headers: {
+                                            'content-type'                : mime.lookup(toPath),
+                                            'content-length'              : chunk.length,
+                                            'last-modified'               : stats.mtime.getTime(),
+                                            'server'                      : 'aproxy',
+                                            'access-control-allow-origin' : '*'
+                                        },
+                                        chunk: chunk
+                                    });
+                                }, reject);
 
-                                if(isLocal){
+                            }, function(err){
 
-                                    fs.readFile(toPath).then(function(chunk){
-
-                                        fs.stat(toPath).then(function(stats){
-                                            resolve({
-                                                type: 0x1, // binary: 01
-                                                statusCode: 200,
-                                                headers: {
-                                                    'content-type': mime.lookup(toPath),
-                                                    'content-length': chunk.length,
-                                                    'last-modified': stats.mtime.getTime(),
-                                                    'server': 'aproxy',
-                                                    'access-control-allow-origin': '*'
-                                                },
-                                                chunk: chunk
-                                            });
-                                        }, reject);
-                                    }, reject);
-
-                                }else {
-                                    var bufs = [];
+                                if(err && err.code === 'ENOENT'){
                                     nw.get(reqPars.toUrlPars([filenameIndex]), options.request).then(function(rs){
+                                        var bufs = [];
 
                                         rs.on('data', function(chunk){
                                             bufs.push(chunk);
@@ -194,16 +189,17 @@ module.exports = (function(http, util, merge, colors, DateUtils, mime,
                                                 chunk  : Buffer.concat(bufs)
                                             });
                                         });
-
                                     }, reject);
+                                }else {
+                                    reject(err);
                                 }
                             });
                         }));
                     }else {
                         promises.push(new Promise(function(resolve, reject){
 
-                            var bufs = [];
                             nw.get(reqPars.toUrlPars([filenameIndex]), options.request).then(function(rs){
+                                var bufs = [];
 
                                 rs.on('data', function(chunk){
                                     bufs.push(chunk);
