@@ -18,7 +18,7 @@ var fs = require('fs');
 var convert = require('convert-source-map');
 
 var instance = require('../');
-var browserify = require('browserify');
+//var browserify = require('browserify');
 var glob = require('glob-all');
 
 
@@ -215,7 +215,7 @@ describe('plain', function() {
     });
 });
 
-describe('browserified', function() {
+/*describe('browserified', function() {
     this.timeout(5000);
 
     describe('local files', function() {
@@ -240,4 +240,4 @@ describe('browserified', function() {
             });
         });
     });
-});
+});*/
