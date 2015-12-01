@@ -145,7 +145,7 @@ module.exports = {
                                 node.body.forEach(function(statement, i){
                                     statement = gulpfile.substring(statement.start.pos, statement.end.pos + 1);
                                     if(REGEXP_CALL_ON_ERROR.test(statement)){
-                                        _funs.push('stream.on(\'error\', function(err){ plainFunc(lessed? pathVal: undefined); });');
+                                        //_funs.push('stream.on(\'error\', function(err){ plainFunc(lessed? pathVal: undefined); });');
                                     }else if(!REGEXP_CALL_GULPDEST.test(statement)){
                                         _funs.push(statement);
                                     }
@@ -161,13 +161,12 @@ module.exports = {
                     }
                     fs.exists(pathVal, function(isLocal){
                         if(isLocal){
-                            _vars.push('DN_SRC = \'' + floorPath + pathLib.sep + '\' + DN_SRC;');
-                            _vars.push('DN_DEST = \'' + floorPath + pathLib.sep + '\' + DN_DEST;');
                             _vars.push('DEBUG = true;');
                             _vars = _vars.join('\n');
                             _funs = _funs.join('\n');
 
                             try{
+                                var __dirname = floorPath;
                                 eval(_vars + '\n' + _funs);
 
                                 var stream;
