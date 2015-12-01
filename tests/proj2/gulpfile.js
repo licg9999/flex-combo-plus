@@ -38,7 +38,7 @@ function buildOneJS(filename){
     }).bundle();
 
     stream = stream.on('error', function(err){ gutil.log(err); });
-    stream = stream.pipe(sourceBuffer(filename));
+    stream = stream.pipe(sourceBuffer(path.relative(SRC, filename)));
     if(DEBUG){
         stream = stream.pipe(sourcemaps.init({loadMaps: true}));
     }
@@ -89,7 +89,7 @@ gulp.task('clean', function(){
 gulp.task('buildJS', function(cb){
     var streams = mergeStream();
     glob.sync(GLOBS_IN_SRC_JS, { cwd: SRC }).forEach(function(filename){
-        streams.add(buildOneJS(filename));
+        streams.add(buildOneJS(path.resolve(SRC, filename)));
     });
     return streams;
 });
@@ -97,7 +97,7 @@ gulp.task('buildJS', function(cb){
 gulp.task('buildCSS', function(cb){
     var streams = mergeStream();
     glob.sync(GLOBS_IN_SRC_CSS, { cwd: SRC }).forEach(function(filename){
-        streams.add(buildOneCSS(filename));
+        streams.add(buildOneCSS(path.resolve(SRC, filename)));
     });
     return streams;
 });
