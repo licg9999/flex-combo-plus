@@ -23,8 +23,8 @@ var mergeStream = require('merge-stream');
 var runSequence = require('run-sequence');
 
 
-var DN_SRC  = 'src',
-    DN_DEST = 'build';
+var SRC  = __dirname + path.sep + 'src',
+    DEST = __dirname + path.sep + '/build';
 
 var GLOBS_IN_SRC_JS  = ['./**/*.js', '!./**/_*.js'];
 var GLOBS_IN_SRC_CSS = ['./**/*.less', '!./**/_*.less'];
@@ -34,7 +34,7 @@ var DEBUG = false;
 function buildOneJS(filename){
     var stream = browserify(filename, {
         debug: DEBUG,
-        basedir: DN_SRC
+        basedir: SRC
     }).bundle();
 
     stream = stream.on('error', function(err){ gutil.log(err); });
@@ -52,41 +52,43 @@ function buildOneJS(filename){
     if(DEBUG){
         stream = stream.pipe(sourcemaps.write());
     }
-    stream = stream.pipe(gulp.dest(DN_DEST));
+    stream = stream.pipe(gulp.dest(DEST));
 
     return stream;
 }
 
 function buildOneCSS(filename){
-    var stream = fs.createReadStream(DN_SRC + path.sep + filename);
+    var stream = fs.createReadStream(filename);
 
     stream = stream.on('error', function(err){ gutil.log(err); });
-    stream = stream.pipe(sourceBuffer(filename));
+    stream = stream.pipe(sourceBuffer(path.relative(SRC, filename)));
     if(DEBUG){
         stream = stream.pipe(sourcemaps.init({loadMaps: true}));
     }
     stream = stream.pipe(less({
-        paths: [ DN_SRC ]
+        paths: [ SRC ]
     }));
-    stream = stream.pipe(minify());
+    if(!DEBUG){
+        stream = stream.pipe(minify());
+    }
     if(DEBUG){
         stream = stream.pipe(sourcemaps.write());
     }
     stream = stream.pipe(autoprefixer({
         browsers: ['> 5%', 'last 2 version']
     }));
-    stream = stream.pipe(gulp.dest(DN_DEST));
+    stream = stream.pipe(gulp.dest(DEST));
 
     return stream;
 }
 
 gulp.task('clean', function(){
-    return del([DN_DEST]);
+    return del([DEST]);
 });
 
 gulp.task('buildJS', function(cb){
     var streams = mergeStream();
-    glob.sync(GLOBS_IN_SRC_JS, { cwd: DN_SRC }).forEach(function(filename){
+    glob.sync(GLOBS_IN_SRC_JS, { cwd: SRC }).forEach(function(filename){
         streams.add(buildOneJS(filename));
     });
     return streams;
@@ -94,26 +96,24 @@ gulp.task('buildJS', function(cb){
 
 gulp.task('buildCSS', function(cb){
     var streams = mergeStream();
-    glob.sync(GLOBS_IN_SRC_CSS, { cwd: DN_SRC }).forEach(function(filename){
+    glob.sync(GLOBS_IN_SRC_CSS, { cwd: SRC }).forEach(function(filename){
         streams.add(buildOneCSS(filename));
     });
     return streams;
 });
 
 gulp.task('watch', function(){
-    gulp.watch(GLOBS_IN_SRC_JS, { cwd: DN_SRC }, function(e){
+    gulp.watch(GLOBS_IN_SRC_JS, { cwd: SRC }, function(e){
         if(e.type === 'deleted') return;
-        var filename = path.relative(process.cwd() + path.sep + DN_SRC, e.path);
         gulp.task('buildOneJS', function(){
-            return buildOneJS(filename);
+            return buildOneJS(e.path);
         });
         runSequence('buildOneJS');
     });
-    gulp.watch(GLOBS_IN_SRC_CSS, { cwd: DN_SRC }, function(e){
+    gulp.watch(GLOBS_IN_SRC_CSS, { cwd: SRC }, function(e){
         if(e.type === 'deleted') return;
-        var filename = path.relative(process.cwd() + path.sep + DN_SRC, e.path);
         gulp.task('buildOneCSS', function(){
-            return buildOneCSS(filename);
+            return buildOneCSS(e.path);
         });
         runSequence('buildOneCSS');
     });

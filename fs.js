@@ -32,6 +32,8 @@ var log = require('./log');
 var REGEXP_JSFILE  = /\.js$/;
 var REGEXP_CSSFILE = /\.css$/;
 var REGEXP_STATEMENT_REQUIRE = /require\s*\(\s*[\'\"](.+)[\'\"]\s*\)/;
+var REGEXP_CALL_GULPDEST = /\.dest\s*\(.*\)/;
+var REGEXP_CALL_ON_ERROR = /\.on\s*\(\s*\'error\'\s*\,.*\)/;
 var SYSTEM_MODULES = {
     'assert': true,
     'buffer': true,
@@ -72,15 +74,15 @@ module.exports = {
     readFile: function(pathVal){
         var deferred = Promise.defer();
 
-        function plainFunc(){
-            fs.readFile(pathVal, {}, function(err, data){
+        function plainFunc(newPathVal){
+            fs.readFile(newPathVal || pathVal, {}, function(err, data){
                 if(err){
                     deferred.reject(err);
                     return;
                 }
                 log(('Disapathed to Local').cyan +
                     (': [' + pathVal + ']').grey);
-                deferred.resolve(data);
+                newPathVal? deferred.resolve([data, newPathVal]): deferred.resolve(data);
             });
         }
 
@@ -135,43 +137,64 @@ module.exports = {
                         }
 
                         if(node instanceof Uglify.AST_Defun){
-                            if(node.name.name === 'buildOneJS'){
-                                _funs.push(gulpfile.substring(node.start.pos, node.end.pos + 1));
-                            }
-                            if(node.name.name === 'buildOneCSS'){
-                                _funs.push(gulpfile.substring(node.start.pos, node.end.pos + 1));
+                            if(node.name.name === 'buildOneJS' || node.name.name === 'buildOneCSS'){
+                                _funs.push('function ' + node.name.name + '(' + node.argnames.map(function(argument){
+                                    return argument.name;
+                                }).join(',') + '){');
+
+                                node.body.forEach(function(statement, i){
+                                    statement = gulpfile.substring(statement.start.pos, statement.end.pos + 1);
+                                    if(REGEXP_CALL_ON_ERROR.test(statement)){
+                                        _funs.push('stream.on(\'error\', function(err){ plainFunc(lessed? pathVal: undefined); });');
+                                    }else if(!REGEXP_CALL_GULPDEST.test(statement)){
+                                        _funs.push(statement);
+                                    }
+                                });
+
+                                _funs.push('}');
                             }
                         }
                     });
                     ast.walk(walker);
-                    _vars.push('DEBUG = true;');
-                    // TODO gulpfile 与 当前环境之间的路径问题
-                    _vars = _vars.join('\n');
-                    _funs = _funs.join('\n');
                     if(isCSS && lessed){
                         pathVal = pathVal.replace(REGEXP_CSSFILE, '.less');
                     }
+                    fs.exists(pathVal, function(isLocal){
+                        if(isLocal){
+                            _vars.push('DN_SRC = \'' + floorPath + pathLib.sep + '\' + DN_SRC;');
+                            _vars.push('DN_DEST = \'' + floorPath + pathLib.sep + '\' + DN_DEST;');
+                            _vars.push('DEBUG = true;');
+                            _vars = _vars.join('\n');
+                            _funs = _funs.join('\n');
 
-                    try{
-                        eval(_vars + '\n' + _funs);
+                            try{
+                                eval(_vars + '\n' + _funs);
 
-                        var stream;
-                        if(REGEXP_JSFILE.test(pathVal)){
-                            stream = buildOneJS(pathVal);
+                                var stream;
+                                if(REGEXP_JSFILE.test(pathVal)){
+                                    stream = buildOneJS(pathVal);
+                                }else {
+                                    stream = buildOneCSS(pathVal);
+                                }
+                                var chunks = [];
+                                stream.on('data', function(chunk){
+                                    chunks.push(chunk._contents);
+                                });
+                                stream.on('end', function(){
+                                    log(('Disapathed to Local').cyan +
+                                        (': [' + pathVal + ']').grey);
+                                    deferred.resolve([Buffer.concat(chunks), pathVal]);
+                                });
+                            }catch(e){
+                                plainFunc(lessed? pathVal: undefined);
+                            }
                         }else {
-                            stream = buildOneCSS(pathVal);
+                            deferred.reject({
+                                code: 'ENOENT'
+                            });
                         }
-                        var chunks = [];
-                        stream.on('data', function(chunk){
-                            chunks.push(chunk._contents);
-                        });
-                        stream.on('end', function(){
-                            deferred.resolve(Buffer.concat(chunks));
-                        });
-                    }catch(e){
-                        console.error(e);
-                        plainFunc();
-                    }
+                    });
+
                 });
             }, function(){
                 plainFunc();

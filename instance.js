@@ -150,6 +150,10 @@ module.exports = (function(http, util, merge, colors, DateUtils, mime,
                     if(toPath){
                         promises.push(new Promise(function(resolve, reject){
                             fs.readFile(toPath).then(function(chunk){
+                                if(Array.isArray(chunk)){
+                                    toPath = chunk[1];
+                                    chunk = chunk[0];
+                                }
                                 fs.stat(toPath).then(function(stats){
                                     resolve({
                                         type: 0x1, // binary: 01
