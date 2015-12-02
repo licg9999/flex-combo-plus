@@ -4,23 +4,18 @@
 /**
 @exports: Object
         .exists: function(){
-            path   : string
+            pathVal: string
+            @return: Promise
+        }
+        .readFile: function(pathVal){
+            pathVal: string
+            @return: Promise
+        }
+        .stat: function(path){
+            pathVal: string
             @return: Promise
         }
 **/
-
-/*
-var REGEXP_REQUIRE_BROWSERIFY = /require\s*\((\s*\'browserify\'|\"browserify\"\s*)\)/;
-
-var REGEXP_EXTERN_DIRNAME = /EXTERN_DIRNAME\s*=\s*(\'(.+)\'|\"(.+)\")/;
-var REGEXP_SRC_DIRNAME    = /SRC_DIRNAME\s*=\s*(\'(.+)\'|\"(.+)\")/;
-var REGEXP_BUILD_DIRNAME  = /BUILD_DIRNAME\s*=\s*(\'(.+)\'|\"(.+)\")/;
-var REGEXP_BUNDLEIT       = /function\s*bundleIt\s*\(\s*b\s*\)\s<];
-
-
-var REGEXP_HIDDEN_JSFILE = /_.*\.js$/;
-var REGEXP_HIDDEN_CSSFILE = /_.*\.css$/;
-*/
 
 var fs = require('fs');
 var pathLib = require('path');
@@ -63,9 +58,9 @@ var SYSTEM_MODULES = {
 };
 
 module.exports = {
-    exists: function(path){
+    exists: function(pathVal){
         var deferred = Promise.defer();
-        fs.exists(path, function(b){
+        fs.exists(pathVal, function(b){
             deferred.resolve(b);
         });
         return deferred.promise;
@@ -116,18 +111,19 @@ module.exports = {
 
                     gulpfile = gulpfile.toString();
                     var _vars = [], _funs = [];
+                    var hasFuncBuildOne = false, hasLessed = false, lessCall = '';
 
-                    var ast = Uglify.parse(gulpfile); 
+                    var ast = Uglify.parse(gulpfile), matched, name;
                     ast.figure_out_scope();
-                    var matched, lessed;
                     var walker = new Uglify.TreeWalker(function(node){
                         if(node instanceof Uglify.AST_SymbolVar && node.scope instanceof Uglify.AST_Toplevel){
+                            name = node.name;
                             node = walker.find_parent(Uglify.AST_Statement);
                             node = gulpfile.substring(node.start.pos, node.end.pos + 1);
                             matched = node.match(REGEXP_STATEMENT_REQUIRE);
                             if (matched){
                                 if(matched[1] === 'gulp-less'){
-                                    lessed = true;
+                                    lessCall = name;
                                 }
 
                                 if(!SYSTEM_MODULES[matched[1]]) {
@@ -143,6 +139,7 @@ module.exports = {
 
                         if(node instanceof Uglify.AST_Defun){
                             if(node.name.name === 'buildOneJS' || node.name.name === 'buildOneCSS'){
+                                hasFuncBuildOne = true;
                                 _funs.push('function ' + node.name.name + '(' + node.argnames.map(function(argument){
                                     return argument.name;
                                 }).join(',') + '){');
@@ -150,7 +147,7 @@ module.exports = {
                                 node.body.forEach(function(statement, i){
                                     statement = gulpfile.substring(statement.start.pos, statement.end.pos + 1);
                                     if(REGEXP_CALL_ON_ERROR.test(statement)){
-                                        _funs.push('stream.on(\'error\', function(err){ log(err.toString().red); });');
+                                        //_funs.push('stream.on(\'error\', function(err){ log(err.toString().red); });');
                                     }else if(!REGEXP_CALL_GULPDEST.test(statement)){
                                         _funs.push(statement);
                                     }
@@ -159,9 +156,19 @@ module.exports = {
                                 _funs.push('}');
                             }
                         }
+
+                        if(node instanceof Uglify.AST_Call){
+                            if(node.expression.name === lessCall){
+                                hasLessed = true;
+                            }
+                        }
                     });
                     ast.walk(walker);
-                    if(isCSS && lessed){
+                    if(!hasFuncBuildOne){
+                        plainFunc();
+                        return;
+                    }
+                    if(isCSS && hasLessed){
                         pathVal = pathVal.replace(REGEXP_CSSFILE, '.less');
                     }
                     fs.exists(pathVal, function(isLocal){
@@ -173,17 +180,13 @@ module.exports = {
                             try{
                                 var __handler__ = setTimeout(function(){
                                     deferred.reject();
-                                }, 10000);
+                                }, 8888);
 
                                 var __dirname = floorPath;
                                 eval(_vars + '\n' + _funs);
 
-                                var stream;
-                                if(REGEXP_JSFILE.test(pathVal)){
-                                    stream = buildOneJS(pathVal);
-                                }else {
-                                    stream = buildOneCSS(pathVal);
-                                }
+                                var stream = isJS? buildOneJS(pathVal): buildOneCSS(pathVal);
+
                                 var chunks = [];
                                 stream.on('data', function(chunk){
                                     chunks.push(chunk._contents);
@@ -195,7 +198,7 @@ module.exports = {
                                     deferred.resolve([Buffer.concat(chunks), pathVal]);
                                 });
                             }catch(e){
-                                lessed? plainFunc(pathVal): plainFunc();
+                                hasLessed? plainFunc(pathVal): plainFunc();
                             }
                         }else {
                             deferred.reject({
@@ -211,159 +214,12 @@ module.exports = {
         }else {
             plainFunc();
         }
-
-        //if(REGEXP_JSFILE.test(path)){
-            //var floorPath = pathLib.resolve(path, '../..');
-            //findup('gulpfile.js', { cwd: floorPath }).then(function(gfp){
-                //if(!gfp){
-                    //plainFunc();
-                    //return;
-                //}
-
-                //fs.readFile(gfp, function(err, gfbuf){
-                    //var gfctt = gfbuf.toString();
-                    //if(!REGEXP_REQUIRE_BROWSERIFY.test(gfctt)){
-                        //plainFunc();
-                        //return;
-                    //}
-
-                    //var parentPath   = pathLib.resolve(gfp, '..');
-                    //var relativePath = pathLib.relative(parentPath, path);
-                    //var holderDirname   = relativePath.substring(0, relativePath.indexOf(pathLib.sep));
-                    //var innerPath    = relativePath.substring(relativePath.indexOf(pathLib.sep) + 1);
-
-                    //if(REGEXP_HIDDEN_JSFILE.test(innerPath)){
-                        //deferred.reject(('Hidden Browserify JS File').yellow + 
-                                        //(': [' + path + ']').grey);
-                        //return;
-                    //}
-
-                    //var buildDirname = gfctt.match(REGEXP_BUILD_DIRNAME);
-                    //buildDirname = buildDirname[2] || buildDirname[3] || undefined;
-
-                    //var srcDirname = gfctt.match(REGEXP_SRC_DIRNAME);
-                    //srcDirname = srcDirname[2] || srcDirname[3] || undefined;
-
-                    //if(buildDirname && holderDirname === buildDirname){
-                        //plainFunc();
-                        //return;
-                    //}
-
-                    //if(srcDirname && holderDirname !== srcDirname){
-                        //deferred.reject();
-                        //return;
-                    //}
-
-                    //findup('package.json', { cwd: floorPath }).then(function(pkgp){
-                        //var browserifyExternal = [];
-                        //if(pkgp){
-                            //try{
-                                //browserifyExternal = JSON.parse(fs.readFileSync(pkgp)).browserify.external;
-                            //}catch(e){}
-                        //}
-
-                        //var externDirname = gfctt.match(REGEXP_EXTERN_DIRNAME);
-                        //externDirname = externDirname[2] || externDirname[3] || undefined;
-                        //var externPattern = [];
-                        //if(externDirname){
-                            //var externDirpath = pathLib.resolve(parentPath, holderDirname, externDirname);
-                            //externPattern.push(externDirpath + pathLib.sep + '**/*.js');
-                            //externPattern.push('!' + externDirpath + pathLib.sep + '**/_*.js');         // 下划线开头的js文件
-                            //externPattern.push('!' + externDirpath + pathLib.sep + '**/_*/**/*.js');    // 下划线开头的文件夹
-                        //}
-
-                        //glob(externPattern, function(err, externFiles){
-                            //if(err) {
-                                //deferred.reject(err);
-                                //return;
-                            //}
-
-                            //var isExtern = innerPath.indexOf(externDirname) === 0;
-                            //var b;
-                            //if(isExtern){
-                                //b = browserify({ 
-                                    //debug: true,
-                                    //basedir: parentPath
-                                //}).require('.' + pathLib.sep + relativePath, {
-                                    //expose: pathLib.sep + relativePath 
-                                //}).external(externFiles.filter(function(ef){
-                                    //return ef !== path;
-                                //}).concat(browserifyExternal));
-                            //}else {
-                                //b = browserify(relativePath, { 
-                                    //debug: true,
-                                    //basedir: parentPath
-                                //}).external(externFiles.map(function(ef){
-                                    //return pathLib.relative(parentPath, ef);
-                                //}).concat(browserifyExternal));
-                            //}
-
-                            //var bundle = gfctt.match(REGEXP_BUNDLEIT);
-                            //var depth = 0, firstCurlyMathed = false;
-                            //for(var i = bundle.index, n = gfctt.length; i < n; i++){
-                                //if(gfctt.charAt(i) === '{'){
-                                    //depth++;
-                                    //if(!firstCurlyMathed){
-                                        //firstCurlyMathed = true;
-                                    //}
-                                //}else if(gfctt.charAt(i) === '}'){
-                                    //depth--;
-                                    //if(firstCurlyMathed && depth === 0) break;
-                                //}
-                            //}
-                            //if(firstCurlyMathed && depth === 0){
-                                //bundle = gfctt.substring(bundle.index, i + 1);
-                                //try{
-                                    //eval(bundle);
-                                    //bundle = bundleIt;
-                                //}catch(e){
-                                    //bundle = function(b){
-                                        //b.bundle();
-                                    //};
-                                //}
-                            //}else {
-                                //bundle = function(b){
-                                    //b.bundle();
-                                //};
-                            //}
-
-                            //var chunks = [];
-                            //bundle(b).on('data', function(chunk){
-                                //chunks.push(chunk);
-                            //}).on('end', function(){
-                                //log(('Disapathed to Local and Browserified').cyan +
-                                    //(': [' + path + ']').grey);
-
-                                //deferred.resolve(Buffer.concat(chunks));
-                            //}).on('error', function(err){
-                                //deferred.reject({
-                                    //code: 'ENOENT'
-                                //});
-                            //});
-                        //});
-                    //});
-                //});
-            //}, function(err){
-                //deferred.reject(err);
-            //});
-        //}else if(REGEXP_CSSFILE.test(path)){
-            //plainFunc();
-        //}else {
-            //plainFunc();
-        //}
-
-        // TODO less judgement and compile
-        // var less = require('less');
-        // less.render(str /* :string */, { paths: [ './src'] }, function(err, result){ 
-        //      console.log(err, result); /* result.css :string*/ 
-        // });
-
         return deferred.promise;
     },
 
-    stat: function(path){
+    stat: function(pathVal){
         var deferred = Promise.defer();
-        fs.stat(path, function(err, stats){
+        fs.stat(pathVal, function(err, stats){
             if(err){
                 deferred.reject(err);
             }else {

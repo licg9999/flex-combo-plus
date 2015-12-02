@@ -23,8 +23,8 @@ var mergeStream = require('merge-stream');
 var runSequence = require('run-sequence');
 
 
-var SRC  = __dirname + path.sep + 'src',
-    DEST = __dirname + path.sep + '/build';
+var SRC  = __dirname + '/src',
+    DEST = __dirname + '/build';
 
 var GLOBS_IN_SRC_JS  = ['./**/*.js', '!./**/_*.js'];
 var GLOBS_IN_SRC_CSS = ['./**/*.less', '!./**/_*.less'];
@@ -37,7 +37,7 @@ function buildOneJS(filename){
         basedir: SRC
     }).bundle();
 
-    stream.on('error', function(err){ gutil.log(err); });
+    stream.on('error', gutil.log);
     stream = stream.pipe(sourceBuffer(path.relative(SRC, filename)));
     if(DEBUG){
         stream = stream.pipe(sourcemaps.init({loadMaps: true}));
@@ -60,7 +60,7 @@ function buildOneJS(filename){
 function buildOneCSS(filename){
     var stream = fs.createReadStream(filename);
 
-    stream.on('error', function(err){ gutil.log(err); });
+    stream.on('error', gutil.log);
     stream = stream.pipe(sourceBuffer(path.relative(SRC, filename)));
     if(DEBUG){
         stream = stream.pipe(sourcemaps.init({loadMaps: true}));

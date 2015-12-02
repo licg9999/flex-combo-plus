@@ -7,7 +7,7 @@
     "node": "^0.11.0"
   },
   "scripts": {
-    "test": "mocha tests/index.js"
+    "test": "sudo mocha tests/plain.js && sudo mocha tests/auto.js"
   },
   "dependencies": {
     "browserify": "^12.0.1",
