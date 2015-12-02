@@ -109,6 +109,11 @@ module.exports = {
                 }
 
                 fs.readFile(gulpath, function(err, gulpfile){
+                    if(err){
+                        plainFunc();
+                        return;
+                    }
+
                     gulpfile = gulpfile.toString();
                     var _vars = [], _funs = [];
 
@@ -166,9 +171,9 @@ module.exports = {
                             _funs = _funs.join('\n');
 
                             try{
-                                var __handler = setTimeout(function(){
+                                var __handler__ = setTimeout(function(){
                                     deferred.reject();
-                                }, 5000);
+                                }, 10000);
 
                                 var __dirname = floorPath;
                                 eval(_vars + '\n' + _funs);
@@ -184,13 +189,13 @@ module.exports = {
                                     chunks.push(chunk._contents);
                                 });
                                 stream.on('end', function(){
-                                    clearTimeout(__handler);
+                                    clearTimeout(__handler__);
                                     log(('Disapathed to Local').cyan +
                                         (': [' + pathVal + ']').grey);
                                     deferred.resolve([Buffer.concat(chunks), pathVal]);
                                 });
                             }catch(e){
-                                plainFunc(lessed? pathVal: undefined);
+                                lessed? plainFunc(pathVal): plainFunc();
                             }
                         }else {
                             deferred.reject({

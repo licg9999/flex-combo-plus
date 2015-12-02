@@ -13,7 +13,6 @@ module.exports = function(options){
 
     /** configurable **/
     options = merge.recursive({
-
     }, options);
     
     return options;
