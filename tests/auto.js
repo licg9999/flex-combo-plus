@@ -71,22 +71,22 @@ function itM(url, sources){
 }
 
 describe('local files', function(){
-    //itM('http://g.alicdn.com/kissy/k/1.4.14/a.js' , ['proj2/build/a.js']);
-    //itM('http://g.alicdn.com/kissy/k/1.4.14/a.css', ['proj2/build/a.css']);
-    //itM('http://g.alicdn.com/kissy/k/1.4.14/b.js' , ['proj2/build/b.js']);
-    //itM('http://g.alicdn.com/kissy/k/1.4.14/b.css', ['proj2/build/b.css']);
-    //itM('http://g.alicdn.com/kissy/k/1.4.14/??a.js,b.js'  , ['proj2/build/a.js', 'proj2/build/b.js']);
-    //itM('http://g.alicdn.com/kissy/k/1.4.14/??a.css,b.css', ['proj2/build/a.css', 'proj2/build/b.css']);
-    itM('http://g.alicdn.com/kissy/k/1.4.14/c.css', ['proj2/build/c.css']);
+    itM('http://g.alicdn.com/kissy/k/1.4.14/a.js' , ['proj2/build/a.js']);
+    itM('http://g.alicdn.com/kissy/k/1.4.14/a.css', ['proj2/build/a.css']);
+    itM('http://g.alicdn.com/kissy/k/1.4.14/b.js' , ['proj2/build/b.js']);
+    itM('http://g.alicdn.com/kissy/k/1.4.14/b.css', ['proj2/build/b.css']);
+    itM('http://g.alicdn.com/kissy/k/1.4.14/??a.js,b.js'  , ['proj2/build/a.js', 'proj2/build/b.js']);
+    itM('http://g.alicdn.com/kissy/k/1.4.14/??a.css,b.css', ['proj2/build/a.css', 'proj2/build/b.css']);
+    //itM('http://g.alicdn.com/kissy/k/1.4.14/c.css', ['proj2/build/c.css']);
 });
 
 describe('remote files', function(){
-    //itM('http://g.alicdn.com/kissy/k/1.4.14/seed-min.js' , ['http://g.alicdn.com/kissy/k/1.4.14/seed-min.js']);
+    itM('http://g.alicdn.com/kissy/k/1.4.14/seed-min.js' , ['http://g.alicdn.com/kissy/k/1.4.14/seed-min.js']);
 });
 
 describe('local x remote', function(){
-    //itM('http://g.alicdn.com/kissy/k/1.4.14/??a.js,seed-min.js' , [
-        //'proj2/build/a.js',
-        //'http://g.alicdn.com/kissy/k/1.4.14/seed-min.js'
-    //]);
+    itM('http://g.alicdn.com/kissy/k/1.4.14/??a.js,seed-min.js' , [
+        'proj2/build/a.js',
+        'http://g.alicdn.com/kissy/k/1.4.14/seed-min.js'
+    ]);
 });

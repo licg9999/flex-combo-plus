@@ -17,46 +17,45 @@
     @return >> options
 }
 **/
+var assert = require('assert');
+var merge = require('merge');
 
-module.exports = (function(assert, merge){
-    
-    return function(options){
-        if(!options){
-            options = {};
+module.exports = function(options) {
+    if (!options) {
+        options = {};
+    }
+
+    /** configurable **/
+    options = merge.recursive({
+        remote: {
+            'g.alicdn.com'              : '110.75.114.8',
+            'g-assets.daily.taobao.net' : '10.101.73.189',
+            'g.tbcdn.cn'                : '140.205.132.240',
+            'g.assets.daily.taobao.net' : '10.101.73.189',
+            'assets.alicdn.com'         : '115.238.23.240',
+            'assets.daily.taobao.net'   : '10.101.73.189'
+        },
+        combo: {
+            start: '??',
+            seq: ','
+        },
+        query: {
+            start: '?',
+            seq: '&',
+            ass: '='
         }
+    }, options);
 
-        /** configurable **/
-        options = merge.recursive({
-            remote:{ 
-                'g.alicdn.com'             : '110.75.114.8',
-                'g-assets.daily.taobao.net': '10.101.73.189',
-                'g.tbcdn.cn'               : '140.205.132.240',
-                'g.assets.daily.taobao.net': '10.101.73.189',
-                'assets.alicdn.com'        : '115.238.23.240',
-                'assets.daily.taobao.net'  : '10.101.73.189'
-            },
-            combo: {
-                start: '??',
-                seq  : ','
-            },
-            query: {
-                start: '?',
-                seq  : '&',
-                ass  : '='
-            }
-        }, options);
+    /** unconfigurable **/
+    merge.recursive(options, {
+        protocol: 'http',
+        host: {
+            seq: ':'
+        },
+        combo: {
+            dir: '/'
+        }
+    });
 
-        /** unconfigurable **/
-        merge.recursive(options, {
-            protocol: 'http',
-            host    : {
-                seq: ':'
-            },
-            combo   : {
-                dir: '/'
-            }
-        });
-        
-        return options;
-    };
-}(require('assert'), require('merge')));
+    return options;
+};

@@ -37,7 +37,7 @@ function buildOneJS(filename){
         basedir: SRC
     }).bundle();
 
-    stream = stream.on('error', function(err){ gutil.log(err); });
+    stream.on('error', function(err){ gutil.log(err); });
     stream = stream.pipe(sourceBuffer(path.relative(SRC, filename)));
     if(DEBUG){
         stream = stream.pipe(sourcemaps.init({loadMaps: true}));
@@ -60,7 +60,7 @@ function buildOneJS(filename){
 function buildOneCSS(filename){
     var stream = fs.createReadStream(filename);
 
-    stream = stream.on('error', function(err){ gutil.log(err); });
+    stream.on('error', function(err){ gutil.log(err); });
     stream = stream.pipe(sourceBuffer(path.relative(SRC, filename)));
     if(DEBUG){
         stream = stream.pipe(sourcemaps.init({loadMaps: true}));

@@ -4,18 +4,17 @@
     @return >> options
 }
 **/
-module.exports = (function(merge){
+var merge = require('merge');
     
-    return function(options){
-        if(!options){
-            options = {};
-        }
+module.exports = function(options){
+    if(!options){
+        options = {};
+    }
 
-        /** configurable **/
-        options = merge.recursive({
+    /** configurable **/
+    options = merge.recursive({
 
-        }, options);
-        
-        return options;
-    };
-}(require('merge')));
+    }, options);
+    
+    return options;
+};

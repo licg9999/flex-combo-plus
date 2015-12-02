@@ -145,7 +145,7 @@ module.exports = {
                                 node.body.forEach(function(statement, i){
                                     statement = gulpfile.substring(statement.start.pos, statement.end.pos + 1);
                                     if(REGEXP_CALL_ON_ERROR.test(statement)){
-                                        //_funs.push('stream.on(\'error\', function(err){ plainFunc(lessed? pathVal: undefined); });');
+                                        _funs.push('stream.on(\'error\', function(err){ log(err.toString().red); });');
                                     }else if(!REGEXP_CALL_GULPDEST.test(statement)){
                                         _funs.push(statement);
                                     }
@@ -166,6 +166,10 @@ module.exports = {
                             _funs = _funs.join('\n');
 
                             try{
+                                var __handler = setTimeout(function(){
+                                    deferred.reject();
+                                }, 5000);
+
                                 var __dirname = floorPath;
                                 eval(_vars + '\n' + _funs);
 
@@ -180,6 +184,7 @@ module.exports = {
                                     chunks.push(chunk._contents);
                                 });
                                 stream.on('end', function(){
+                                    clearTimeout(__handler);
                                     log(('Disapathed to Local').cyan +
                                         (': [' + pathVal + ']').grey);
                                     deferred.resolve([Buffer.concat(chunks), pathVal]);
