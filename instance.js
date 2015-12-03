@@ -29,7 +29,6 @@
     }
 }
 **/
-// TODO 去除冗余的模块依赖
 require('colors');
 var http = require('http');
 var util = require('util');
@@ -44,13 +43,6 @@ var requestFopts = require('./request.fopts');
 var response = require('./response');
 var responseFopts = require('./response.fopts');
 var try2do = require('./try2do');
-
-process.on('unhandledRejection', function(err){
-    log(err.toString().red);
-});
-process.on('uncaughtException', function(err){
-    log(err.toString().red);
-});
 
 module.exports = function(rules, options){
     (function format(){
