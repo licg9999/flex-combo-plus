@@ -48,13 +48,15 @@ function request(urlPars, options, actions) {
         if (options.remote[urlPars.headers.host]) {
             next();
         } else {
-            dns.lookup(urlPars.headers.host, function(err, addr) {
-                if (!err && addr !== '127.0.0.1') {
-                    next();
-                } else {
-                    error(null);
+            dns.resolve4(urlPars.headers.host, function(err, addr) {
+                if(err || (addr = addr[0]) === '127.0.0.1'){
+                    error(err);
                     deferred.reject(('Unconfigured Remote(' + urlPars.headers.host + ')').red +
                         (': [' + url.format(urlPars) + ']').grey);
+                }else {
+                    urlPars.host = urlPars.host.replace(urlPars.hostname, addr);
+                    urlPars.hostname = addr;
+                    next();
                 }
             });
         }

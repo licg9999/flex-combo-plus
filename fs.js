@@ -17,10 +17,10 @@
         }
 **/
 
+require('colors');
 var fs = require('fs');
 var pathLib = require('path');
 var findup = require('find-up');
-var colors = require('colors');
 var Uglify = require('uglify-js');
 var log = require('./log');
 
