@@ -7,7 +7,7 @@
     "node": "^0.11.0"
   },
   "scripts": {
-    "test": "sudo mocha tests/plain.js && sudo mocha tests/auto.js"
+    "test": "sudo mocha tests/plain.js"
   },
   "dependencies": {
     "colors": "~1.0.3",
