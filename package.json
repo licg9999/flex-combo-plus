@@ -4,7 +4,7 @@
   "description": "process engine for aproxy",
   "main": "instance.js",
   "engines": {
-    "node": "^0.11.0"
+    "node": "^0.12.0"
   },
   "scripts": {
     "test": "sudo mocha tests/plain.js"
