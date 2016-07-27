@@ -1,6 +1,6 @@
 {
   "name": "flex-combo-plus",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "process engine for aproxy",
   "main": "instance.js",
   "engines": {
