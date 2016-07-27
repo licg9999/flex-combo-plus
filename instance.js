@@ -159,8 +159,11 @@ module.exports = function(rules, options){
 
                 if(toPath){
                     promises.push(new Promise(function(resolve, reject){
-                        fs.readFile(toPath).then(function(chunk){
+                        fs.readFile(toPath).then(function(pair){
                             var contentType = mime.lookup(toPath);
+                            var chunk = pair[0];
+                            toPath = pair[1];
+
                             fs.stat(toPath).then(function(stats){
                                 resolve({
                                     type: 0x1, // binary: 01
@@ -174,6 +177,10 @@ module.exports = function(rules, options){
                                     },
                                     chunk: chunk
                                 });
+
+                                pair = null;
+                                contentType = null;
+                                chunk = null;
                             }, reject);
 
                         }, function(err){

@@ -19,43 +19,8 @@
 
 require('colors');
 var fs = require('fs');
-var pathLib = require('path');
-var findup = require('find-up');
-var Uglify = require('uglify-js');
 var log = require('./log');
-
-var REGEXP_JSFILE  = /\.js$/;
-var REGEXP_CSSFILE = /\.css$/;
-var REGEXP_STATEMENT_REQUIRE = /require\s*\(\s*[\'\"](.+)[\'\"]\s*\)/;
-var REGEXP_CALL_GULPDEST = /\.dest\s*\(.*\)/;
-var REGEXP_CALL_ON_ERROR = /\.on\s*\(\s*\'error\'\s*\,.*\)/;
-var SYSTEM_MODULES = {
-    'assert': true,
-    'buffer': true,
-    'child_process': true,
-    'cluster': true,
-    'console': true,
-    'crypto': true,
-    'dns': true,
-    'events': true,
-    'fs': true,
-    'http': true,
-    'https': true,
-    'net': true,
-    'os': true,
-    'path': true,
-    'process': true,
-    'punycode': true,
-    'querystring': true,
-    'readline': true,
-    'stream': true,
-    'tls': true,
-    'dgram': true,
-    'url': true,
-    'util': true,
-    'vm': true,
-    'zlib': true
-};
+var preproc = require('./preproc');
 
 module.exports = {
     exists: function(pathVal){
@@ -69,14 +34,14 @@ module.exports = {
     readFile: function(pathVal){
         var deferred = Promise.defer();
 
-        fs.readFile(pathVal, {}, function(err, data){
-            if(err){
-                deferred.reject(err);
-                return;
-            }
+        preproc(pathVal)
+        .then(function(pair){
             log(('Disapathed to Local').cyan +
-                (': [' + pathVal + ']').grey);
-            deferred.resolve(data);
+                (': [' + pair[1] + ']').grey);
+            deferred.resolve(pair);
+        })
+        .catch(function(err){
+            deferred.reject(err);
         });
 
         return deferred.promise;

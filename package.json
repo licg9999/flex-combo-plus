@@ -7,17 +7,15 @@
     "node": "^0.12.0"
   },
   "scripts": {
-    "test": "sudo mocha tests/plain.js"
+    "test": "sudo mocha tests/plain.js tests/less.js"
   },
   "dependencies": {
     "colors": "~1.0.3",
     "date-utils": "~1.2.16",
-    "find-up": "^1.1.0",
-    "glob-all": "^3.0.1",
-    "gulp-sourcemaps": "~1.6.0",
+    "less": "~2.7.1",
+    "less-plugin-npm-import": "~2.1.0",
     "merge": "~1.2.0",
-    "mime": "~1.2.11",
-    "uglify-js": "~2.6.1"
+    "mime": "~1.2.11"
   },
   "devDependencies": {
     "async": "^1.5.0",

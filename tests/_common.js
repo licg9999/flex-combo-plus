@@ -4,10 +4,11 @@ var path = require('path');
 var async = require('async');
 var request = require('request');
 var expect = require('chai').expect;
+var preproc = require('../preproc');
 
 module.exports = {
     itA: function(url, sources) {
-        it(url + '  <=>  ' + sources.join().replace(/build/g, 'src').replace('.css', '.less'), function(done) {
+        it(url + '  <=>  ' + sources.join().replace(/build/g, 'src'), function(done) {
             var missions = [
                 function(cb) {
                     request(url, function(err, res, ctt) {
@@ -20,7 +21,7 @@ module.exports = {
                 if (source.indexOf('http://') === 0) {
                     missions.push(function(cb) {
                         request({
-                            url: source.replace('g.alicdn.com', '140.205.132.240'),
+                            url: source.replace('g.alicdn.com', '140.205.77.250'),
                             headers: {
                                 host: 'g.alicdn.com'
                             }
@@ -30,8 +31,12 @@ module.exports = {
                     });
                 } else {
                     missions.push(function(cb) {
-                        fs.readFile(__dirname + path.sep + source, function(err, buf) {
-                            cb(err, buf.toString());
+                        preproc(__dirname + path.sep + source)
+                        .then(function(pair){
+                            cb(null, pair[0].toString());
+                        })
+                        .catch(function(err){
+                            cb(err);
                         });
                     });
                 }

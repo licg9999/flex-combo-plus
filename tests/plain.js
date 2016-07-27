@@ -6,9 +6,10 @@ var itA = require('./_common').itA;
 
 
 describe('plain', function(){
+    var server;
     describe('start http server', function() {
         it('should init without error', function(done) {
-            http.createServer(instance([{
+            server = http.createServer(instance([{
                 name: '2src1',
                 from: '/kissy/k/(\\d+\\.){2}\\d+/',
                 to: __dirname + '/src1/',
@@ -23,6 +24,8 @@ describe('plain', function(){
     });
 
     describe('local files', function() {
+        itA('http://g.alicdn.com/kissy/k/1.4.14/a.css', ['src1/a.css']);
+
         itA('http://g.alicdn.com/kissy/k/1.4.14/a.js', ['src1/a.js']);
 
         itA('http://g.alicdn.com/kissy/k/1.4.14/??a.js,b.js', ['src1/a.js', 'src1/b.js']);
@@ -77,7 +80,8 @@ describe('plain', function(){
     });
 
     describe('remote files', function(){
-        itA('http://g.alicdn.com/tb-mod/??tb-pad/1.0.1/index.css,tb-sitenav/1.0.3/index.css,tb-sysinfo/1.0.0/index.css,tb-sysbanner/1.0.0/index.css,tb-double12-banner/0.0.9/index.css,tb-banner/1.0.12/index.css,tb-top-spy/1.0.4/index.css,tb-birthday/1.0.2/index.css,tb-search/1.0.29/index.css,tb-logo/1.0.5/index.css,tb-qr/1.0.0/index.css,tb-nav/1.0.7/index.css,tb-tanx/1.0.0/index.css,tb-promo/1.0.7/index.css,tb-tmall/1.0.9/index.css,tb-notice/1.0.4/index.css,tb-member/1.0.7/index.css,tb-headlines/1.0.3/index.css,tb-conve/1.0.16/index.css,tb-double12-service/0.0.5/index.css,tb-double12-belt/0.0.3/index.css,tb-belt/1.0.5/index.css,tb-belt-slide/1.0.10/index.css,tb-apps/1.0.8/index.css,tb-feature/1.0.4/index.css,tb-discover-goods/1.0.3/index.css,tb-footprint/1.0.7/index.css,tb-discover-shop/1.0.3/index.css,tb-custom/1.0.0/index.css,tb-sale/1.0.0/index.css,tb-helper/1.0.0/index.css,tb-footer/1.0.0/index.css,tb-decorations/1.0.27/index.css,tb-fixedtool/1.0.0/index.css,tb-inject/0.0.13/index.css,tb-service/1.0.12/index.css,tb-cat/1.0.2/index.css,tb-rmdimg/1.0.0/index.css,tb-market-ifashion/1.0.7/index.css,tb-market/1.0.2/index.css,tb-market2/1.0.3/index.css,tb-market-electronic/1.0.4/index.css,tb-market-diet/1.0.8/index.css,tb-oead/1.0.0/index.css,tb-market-furniture/1.0.5/index.css,tb-market-pannel/1.0.4/index.css,tb-channel/1.0.1/index.css,tb-channel-travel/1.0.1/index.css,tb-guang/1.0.1/index.css,tb-channel2/1.0.3/index.css', ['http://g.alicdn.com/tb-mod/??tb-pad/1.0.1/index.css,tb-sitenav/1.0.3/index.css,tb-sysinfo/1.0.0/index.css,tb-sysbanner/1.0.0/index.css,tb-double12-banner/0.0.9/index.css,tb-banner/1.0.12/index.css,tb-top-spy/1.0.4/index.css,tb-birthday/1.0.2/index.css,tb-search/1.0.29/index.css,tb-logo/1.0.5/index.css,tb-qr/1.0.0/index.css,tb-nav/1.0.7/index.css,tb-tanx/1.0.0/index.css,tb-promo/1.0.7/index.css,tb-tmall/1.0.9/index.css,tb-notice/1.0.4/index.css,tb-member/1.0.7/index.css,tb-headlines/1.0.3/index.css,tb-conve/1.0.16/index.css,tb-double12-service/0.0.5/index.css,tb-double12-belt/0.0.3/index.css,tb-belt/1.0.5/index.css,tb-belt-slide/1.0.10/index.css,tb-apps/1.0.8/index.css,tb-feature/1.0.4/index.css,tb-discover-goods/1.0.3/index.css,tb-footprint/1.0.7/index.css,tb-discover-shop/1.0.3/index.css,tb-custom/1.0.0/index.css,tb-sale/1.0.0/index.css,tb-helper/1.0.0/index.css,tb-footer/1.0.0/index.css,tb-decorations/1.0.27/index.css,tb-fixedtool/1.0.0/index.css,tb-inject/0.0.13/index.css,tb-service/1.0.12/index.css,tb-cat/1.0.2/index.css,tb-rmdimg/1.0.0/index.css,tb-market-ifashion/1.0.7/index.css,tb-market/1.0.2/index.css,tb-market2/1.0.3/index.css,tb-market-electronic/1.0.4/index.css,tb-market-diet/1.0.8/index.css,tb-oead/1.0.0/index.css,tb-market-furniture/1.0.5/index.css,tb-market-pannel/1.0.4/index.css,tb-channel/1.0.1/index.css,tb-channel-travel/1.0.1/index.css,tb-guang/1.0.1/index.css,tb-channel2/1.0.3/index.css']);
+        itA('http://g.alicdn.com/tb-mod/??tb-pad/1.0.1/index.css,tb-sitenav/1.0.3/index.css,tb-sysinfo/1.0.0/index.css,tb-sysbanner/1.0.0/index.css,tb-double12-banner/0.0.9/index.css,tb-banner/1.0.12/index.css,tb-top-spy/1.0.4/index.css,tb-birthday/1.0.2/index.css,tb-search/1.0.29/index.css,tb-logo/1.0.5/index.css,tb-qr/1.0.0/index.css,tb-nav/1.0.7/index.css,tb-tanx/1.0.0/index.css,tb-promo/1.0.7/index.css,tb-tmall/1.0.9/index.css,tb-notice/1.0.4/index.css,tb-member/1.0.7/index.css,tb-headlines/1.0.3/index.css,tb-conve/1.0.16/index.css,tb-double12-service/0.0.5/index.css,tb-double12-belt/0.0.3/index.css,tb-belt/1.0.5/index.css,tb-belt-slide/1.0.10/index.css,tb-apps/1.0.8/index.css,tb-feature/1.0.4/index.css,tb-discover-goods/1.0.3/index.css,tb-footprint/1.0.7/index.css,tb-discover-shop/1.0.3/index.css,tb-custom/1.0.0/index.css,tb-sale/1.0.0/index.css,tb-helper/1.0.0/index.css,tb-footer/1.0.0/index.css,tb-decorations/1.0.27/index.css,tb-fixedtool/1.0.0/index.css,tb-inject/0.0.13/index.css,tb-service/1.0.12/index.css,tb-cat/1.0.2/index.css,tb-rmdimg/1.0.0/index.css,tb-market-ifashion/1.0.7/index.css,tb-market/1.0.2/index.css,tb-market2/1.0.3/index.css,tb-market-electronic/1.0.4/index.css,tb-market-diet/1.0.8/index.css,tb-oead/1.0.0/index.css,tb-market-furniture/1.0.5/index.css,tb-market-pannel/1.0.4/index.css,tb-channel/1.0.1/index.css,tb-channel-travel/1.0.1/index.css,tb-guang/1.0.1/index.css,tb-channel2/1.0.3/index.css', 
+            ['http://g.alicdn.com/tb-mod/??tb-pad/1.0.1/index.css,tb-sitenav/1.0.3/index.css,tb-sysinfo/1.0.0/index.css,tb-sysbanner/1.0.0/index.css,tb-double12-banner/0.0.9/index.css,tb-banner/1.0.12/index.css,tb-top-spy/1.0.4/index.css,tb-birthday/1.0.2/index.css,tb-search/1.0.29/index.css,tb-logo/1.0.5/index.css,tb-qr/1.0.0/index.css,tb-nav/1.0.7/index.css,tb-tanx/1.0.0/index.css,tb-promo/1.0.7/index.css,tb-tmall/1.0.9/index.css,tb-notice/1.0.4/index.css,tb-member/1.0.7/index.css,tb-headlines/1.0.3/index.css,tb-conve/1.0.16/index.css,tb-double12-service/0.0.5/index.css,tb-double12-belt/0.0.3/index.css,tb-belt/1.0.5/index.css,tb-belt-slide/1.0.10/index.css,tb-apps/1.0.8/index.css,tb-feature/1.0.4/index.css,tb-discover-goods/1.0.3/index.css,tb-footprint/1.0.7/index.css,tb-discover-shop/1.0.3/index.css,tb-custom/1.0.0/index.css,tb-sale/1.0.0/index.css,tb-helper/1.0.0/index.css,tb-footer/1.0.0/index.css,tb-decorations/1.0.27/index.css,tb-fixedtool/1.0.0/index.css,tb-inject/0.0.13/index.css,tb-service/1.0.12/index.css,tb-cat/1.0.2/index.css,tb-rmdimg/1.0.0/index.css,tb-market-ifashion/1.0.7/index.css,tb-market/1.0.2/index.css,tb-market2/1.0.3/index.css,tb-market-electronic/1.0.4/index.css,tb-market-diet/1.0.8/index.css,tb-oead/1.0.0/index.css,tb-market-furniture/1.0.5/index.css,tb-market-pannel/1.0.4/index.css,tb-channel/1.0.1/index.css,tb-channel-travel/1.0.1/index.css,tb-guang/1.0.1/index.css,tb-channel2/1.0.3/index.css']);
 
         itA('http://g.alicdn.com/??kissy/k/1.4.14/seed-min.js,tb/global/3.5.28/global-min.js', 
            ['http://g.alicdn.com/??kissy/k/1.4.14/seed-min.js,tb/global/3.5.28/global-min.js']);
@@ -98,5 +102,11 @@ describe('plain', function(){
 
         itA('http://g.alicdn.com??tb/global/3.5.28/global-min.js,kissy/k/1.4.14/a.js', 
             ['http://g.alicdn.com/tb/global/3.5.28/global-min.js', 'src1/a.js']);
+    });
+
+    describe('stop http server', function(){
+        it('should shutdown without error', function(done){
+            server.close(done);
+        });
     });
 });
