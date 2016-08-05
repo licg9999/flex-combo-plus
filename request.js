@@ -42,7 +42,7 @@ module.exports = {
     parse: function(request, options) {
 
         var hostPars = (request.headers.ahost || request.headers.host).split(options.host.seq),
-            urlPath = path.normalize(request.url);
+            urlPath = path.normalize(request.url).replace(/\\/g, '/');
 
         var lenC = options.combo.start.length,
             posC = urlPath.indexOf(options.combo.start),

@@ -6,6 +6,8 @@ var itA = require('./_common').itA;
 
 
 describe('plain', function(){
+    this.timeout(5000);
+
     var server;
     describe('start http server', function() {
         it('should init without error', function(done) {
