@@ -1,6 +1,7 @@
 var fs = require('fs');
-
+var path = require('path');
 var less = require('less');
+var findup = require('find-up');
 var npmimport = new (require('less-plugin-npm-import'))();
 
 var REG_PATH_EXT_CSS = /\.css$/;
@@ -17,14 +18,24 @@ module.exports = function(pathVal){
         fs.exists(pathTar, function(exists){
             if(exists){
                 fs.readFile(pathTar, {}, function(err, data){
-                    less.render(data.toString(), { 
-                        sourceMap: {
-                            sourceMapFileInline: false
-                        },
-                        plugins: [ npmimport ]
-                    })
-                    .then(function(o){
-                        deferred.resolve([new Buffer(o.css), pathTar]);
+
+                    findup('package.json')
+                    .then(function(pathDir){
+                        pathDir = path.resolve(pathDir, '..');
+
+                        less.render(data.toString(), { 
+                            paths: [ pathDir, path.resolve(pathTar, '..') ],
+                            sourceMap: {
+                                sourceMapFileInline: false
+                            },
+                            plugins: [ npmimport ]
+                        })
+                        .then(function(o){
+                            deferred.resolve([new Buffer(o.css), pathTar]);
+                        })
+                        .catch(function(err){
+                            deferred.reject(err);
+                        });
                     })
                     .catch(function(err){
                         deferred.reject(err);

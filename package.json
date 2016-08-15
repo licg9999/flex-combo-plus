@@ -1,6 +1,6 @@
 {
   "name": "flex-combo-plus",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "description": "process engine for aproxy",
   "main": "instance.js",
   "engines": {
@@ -12,6 +12,7 @@
   "dependencies": {
     "colors": "~1.0.3",
     "date-utils": "~1.2.16",
+    "find-up": "~1.1.2",
     "less": "~2.7.1",
     "less-plugin-npm-import": "~2.1.0",
     "merge": "~1.2.0",

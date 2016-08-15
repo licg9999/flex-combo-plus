@@ -16,7 +16,12 @@ describe('plain', function(){
                 from: '/kissy/k/(\\d+\\.){2}\\d+/',
                 to: __dirname + '/src3/',
                 disabled: false
-            }], {})).listen(80, done);
+            }], {
+                request: {
+                    remote: {
+                    }
+                }
+            })).listen(80, done);
         });
     });
 
