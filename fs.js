@@ -24,38 +24,37 @@ var preproc = require('./preproc');
 
 module.exports = {
     exists: function(pathVal){
-        var deferred = Promise.defer();
-        fs.exists(pathVal, function(b){
-            deferred.resolve(b);
+        return new Promise(function (resolve, reject) {
+            fs.exists(pathVal, function(b){
+                resolve(b);
+            });
         });
-        return deferred.promise;
     },
     
     readFile: function(pathVal){
-        var deferred = Promise.defer();
+        return new Promise(function (resolve, reject) {
+            preproc(pathVal)
+                .then(function(pair){
+                    log(('Disapathed to Local').cyan +
+                        (': [' + pair[1] + ']').grey);
+                    resolve(pair);
+                })
+                .catch(function(err){
+                    reject(err);
+                });
 
-        preproc(pathVal)
-        .then(function(pair){
-            log(('Disapathed to Local').cyan +
-                (': [' + pair[1] + ']').grey);
-            deferred.resolve(pair);
-        })
-        .catch(function(err){
-            deferred.reject(err);
         });
-
-        return deferred.promise;
     },
 
     stat: function(pathVal){
-        var deferred = Promise.defer();
-        fs.stat(pathVal, function(err, stats){
-            if(err){
-                deferred.reject(err);
-            }else {
-                deferred.resolve(stats);
-            }
+        return new Promise(function (resolve, reject) {
+            fs.stat(pathVal, function(err, stats){
+                if(err){
+                    reject(err);
+                }else {
+                    resolve(stats);
+                }
+            });
         });
-        return deferred.promise;
     }
 };
